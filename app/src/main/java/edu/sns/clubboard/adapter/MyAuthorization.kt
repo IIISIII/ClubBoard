@@ -5,7 +5,6 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import edu.sns.clubboard.data.User
 import edu.sns.clubboard.port.AuthInterface
-import kotlinx.coroutines.tasks.await
 
 class MyAuthorization: AuthInterface
 {
@@ -15,7 +14,7 @@ class MyAuthorization: AuthInterface
 
     override fun init(onComplete: () -> Unit)
     {
-        auth.currentUser?.reload()
+        auth.currentUser?.reload()?.addOnCompleteListener { onComplete() } ?: onComplete()
     }
 
     override fun login(id: String, pw: String, onSuccess: () -> Unit, onFailed: () -> Unit)

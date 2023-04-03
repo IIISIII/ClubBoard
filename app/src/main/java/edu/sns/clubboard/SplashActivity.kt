@@ -26,6 +26,13 @@ class SplashActivity : AppCompatActivity() {
 
         startTime = System.currentTimeMillis()
 
+        auth.init {
+            init()
+        }
+    }
+
+    private fun init()
+    {
         if(auth.isLogined()) {
             if(auth.isAuthenticated(null))
                 splash { moveToMainActivity() }
