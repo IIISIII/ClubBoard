@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "642594510374",
+    "project_id": "clubboard-9c630",
+    "storage_bucket": "clubboard-9c630.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:642594510374:android:195fbce59c186c5dea78e7",
+        "android_client_info": {
+          "package_name": "edu.sns.clubboard"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "642594510374-fkno405p3jpo1vvep20v7dcrkdm8l63b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCW7zfSEWCUYeCIQCbSNJsifVxjegclLJ0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "642594510374-fkno405p3jpo1vvep20v7dcrkdm8l63b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
