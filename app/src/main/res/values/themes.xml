@@ -20,4 +20,10 @@
         <item name="hintTextColor">@color/black</item>
         <item name="android:textCursorDrawable">@color/black</item>
     </style>
+    <style name="Theme.ClubBoard.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+    <style name="Theme.ClubBoard.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="Theme.ClubBoard.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

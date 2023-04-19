@@ -1,9 +1,10 @@
 package edu.sns.clubboard
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
+import android.net.Uri
 import android.os.Bundle
-import edu.sns.clubboard.adapter.MyAuthorization
+import androidx.appcompat.app.AppCompatActivity
+import edu.sns.clubboard.adapter.FBAuthorization
 import edu.sns.clubboard.databinding.ActivityAuthenticateBinding
 import edu.sns.clubboard.port.AuthInterface
 
@@ -13,12 +14,20 @@ class AuthenticateActivity : AppCompatActivity() {
         ActivityAuthenticateBinding.inflate(layoutInflater)
     }
 
-    private val auth: AuthInterface = MyAuthorization()
+    private val auth: AuthInterface = FBAuthorization.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+
+        setSupportActionBar(binding.authToolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        binding.mailBtn.setOnClickListener {
+            val viewIntent = Intent("android.intent.action.VIEW", Uri.parse("https://mail.hansung.ac.kr/"))
+            startActivity(viewIntent)
+        }
 
         binding.authBtn.setOnClickListener {
             auth.authenticate(null)

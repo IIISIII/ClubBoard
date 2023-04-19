@@ -1,6 +1,6 @@
 package edu.sns.clubboard.data
 
-data class User(val studentId: String, val name: String, val phone: String, val email: String, var nickname: String, var loginId: String, var imagePath: String? = null)
+data class User(var id: String?, val studentId: String, val name: String, val phone: String, val email: String, var nickname: String = "user", var loginId: String, var permissions: List<Permission>? = null, var imagePath: String? = null, val admin: Boolean = false)
 {
     companion object
     {
@@ -11,20 +11,12 @@ data class User(val studentId: String, val name: String, val phone: String, val 
         const val KEY_NICKNAME = "nickname"
         const val KEY_LOGINID = "login_id"
         const val KEY_PROFILE_IMG = "image_path"
+        const val KEY_PERMISSIONS = "permissions"
+        const val KEY_ADMIN = "admin"
     }
 
-    fun toHashMap(): HashMap<String, String>
+    fun toHashMap(): HashMap<String, Any?>
     {
-        if(imagePath == null) {
-            return hashMapOf(
-                KEY_STUDENTID to studentId,
-                KEY_NAME to name,
-                KEY_PHONE to phone,
-                KEY_EMAIL to email,
-                KEY_NICKNAME to nickname,
-                KEY_LOGINID to loginId
-            )
-        }
         return hashMapOf(
             KEY_STUDENTID to studentId,
             KEY_NAME to name,
@@ -32,7 +24,7 @@ data class User(val studentId: String, val name: String, val phone: String, val 
             KEY_EMAIL to email,
             KEY_NICKNAME to nickname,
             KEY_LOGINID to loginId,
-            KEY_PROFILE_IMG to imagePath!!
+            KEY_PROFILE_IMG to imagePath
         )
     }
 }

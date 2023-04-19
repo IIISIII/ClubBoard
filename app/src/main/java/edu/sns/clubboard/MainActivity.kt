@@ -5,7 +5,9 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import edu.sns.clubboard.adapter.MyAuthorization
+import android.widget.Toast
+import edu.sns.clubboard.adapter.FBAuthorization
+import edu.sns.clubboard.data.Permission
 import edu.sns.clubboard.databinding.ActivityMainBinding
 import edu.sns.clubboard.port.AuthInterface
 
@@ -14,7 +16,7 @@ class MainActivity : AppCompatActivity() {
         ActivityMainBinding.inflate(layoutInflater)
     }
 
-    private val auth : AuthInterface = MyAuthorization()
+    private val auth : AuthInterface = FBAuthorization.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?)
     {
@@ -53,10 +55,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+
+        FBAuthorization.remove()
+    }
+
     private fun init()
     {
         binding.searchClub.setOnClickListener {
+            val intent = Intent(this, ClubListActivity::class.java)
+            startActivity(intent)
+        }
 
+        binding.freeBoardBtn.setOnClickListener {
+            val intent = Intent(this, BoardActivity::class.java)
+            intent.putExtra("board_id", "0")
+            startActivity(intent)
         }
     }
 

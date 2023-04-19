@@ -4,9 +4,11 @@ import edu.sns.clubboard.data.User
 
 interface AuthInterface
 {
-    fun init(onComplete: () -> Unit)
+    fun load(onComplete: (User?) -> Unit)
 
     fun login(id: String, pw: String, onSuccess: () -> Unit, onFailed: () -> Unit)
+
+    fun getUserInfo(): User?
 
     fun authenticate(user: User?)
 

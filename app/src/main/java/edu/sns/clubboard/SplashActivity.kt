@@ -5,7 +5,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import edu.sns.clubboard.adapter.MyAuthorization
+import android.widget.Toast
+import edu.sns.clubboard.adapter.FBAuthorization
 import edu.sns.clubboard.databinding.ActivitySplashBinding
 import edu.sns.clubboard.port.AuthInterface
 
@@ -15,7 +16,7 @@ class SplashActivity : AppCompatActivity() {
         ActivitySplashBinding.inflate(layoutInflater)
     }
 
-    private val auth: AuthInterface = MyAuthorization()
+    private val auth: AuthInterface = FBAuthorization.getInstance()
 
     private var startTime: Long = 0
 
@@ -26,7 +27,10 @@ class SplashActivity : AppCompatActivity() {
 
         startTime = System.currentTimeMillis()
 
-        auth.init {
+        auth.load {
+            it?.run {
+                Toast.makeText(this@SplashActivity, this.toHashMap().toString(), Toast.LENGTH_LONG).show()
+            }
             init()
         }
     }

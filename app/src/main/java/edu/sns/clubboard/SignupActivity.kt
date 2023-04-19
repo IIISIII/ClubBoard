@@ -5,7 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import edu.sns.clubboard.adapter.MyAuthorization
+import edu.sns.clubboard.adapter.FBAuthorization
 import edu.sns.clubboard.data.User
 import edu.sns.clubboard.databinding.ActivitySignupBinding
 import edu.sns.clubboard.port.AuthInterface
@@ -16,7 +16,7 @@ class SignupActivity : AppCompatActivity() {
         ActivitySignupBinding.inflate(layoutInflater)
     }
 
-    private val auth: AuthInterface = MyAuthorization()
+    private val auth: AuthInterface = FBAuthorization.getInstance()
 
     private var studentId: String? = null
     private var name: String? = null
@@ -32,6 +32,9 @@ class SignupActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
+        setSupportActionBar(binding.signupToolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
         binding.signupBtn.setOnClickListener {
             try {
                 email = binding.inputEmail.editText?.text.toString()
@@ -42,7 +45,7 @@ class SignupActivity : AppCompatActivity() {
                 phone = binding.inputPhone.editText?.text.toString()
                 nickname = "test"
 
-                val user = User(studentId!!, name!!, phone!!, email!!, nickname!!, loginId!!, null)
+                val user = User(null, studentId!!, name!!, phone!!, email!!, nickname!!, loginId!!, null)
 
                 auth.signUp(user, password!!, onSuccess = {
                     onSuccess()

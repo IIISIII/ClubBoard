@@ -4,7 +4,8 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
-import edu.sns.clubboard.adapter.MyAuthorization
+import edu.sns.clubboard.adapter.FBAuthorization
+import edu.sns.clubboard.data.Permission
 import edu.sns.clubboard.databinding.ActivityLoginBinding
 import edu.sns.clubboard.port.AuthInterface
 
@@ -14,12 +15,15 @@ class LoginActivity : AppCompatActivity() {
         ActivityLoginBinding.inflate(layoutInflater)
     }
 
-    private val auth: AuthInterface = MyAuthorization()
+    private val auth: AuthInterface = FBAuthorization.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+
+        setSupportActionBar(binding.loginToolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         binding.signupBtn.setOnClickListener {
             startActivity(Intent(this, SignupActivity::class.java))
@@ -30,7 +34,7 @@ class LoginActivity : AppCompatActivity() {
             val password = binding.inputPassword.editText?.text.toString()
 
             try {
-                auth.login(id, password!!, onSuccess = {
+                auth.login(id, password, onSuccess = {
                     onSuccess()
                 }, onFailed = {
                     onFailed()
