@@ -5,11 +5,12 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.Toast
 import edu.sns.clubboard.adapter.FBAuthorization
-import edu.sns.clubboard.data.Permission
 import edu.sns.clubboard.databinding.ActivityMainBinding
 import edu.sns.clubboard.port.AuthInterface
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private val binding by lazy {
@@ -53,12 +54,6 @@ class MainActivity : AppCompatActivity() {
             }
             else -> false
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-
-        FBAuthorization.remove()
     }
 
     private fun init()

@@ -1,6 +1,5 @@
 package edu.sns.clubboard
 
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import edu.sns.clubboard.adapter.FBAuthorization
@@ -9,6 +8,9 @@ import edu.sns.clubboard.data.Post
 import edu.sns.clubboard.databinding.ActivityWriteBinding
 import edu.sns.clubboard.port.AuthInterface
 import edu.sns.clubboard.port.BoardInterface
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.Date
 
 class WriteActivity : AppCompatActivity()
@@ -37,7 +39,7 @@ class WriteActivity : AppCompatActivity()
             val title = binding.postTitle.text.toString()
             val text = binding.postText.text.toString()
 
-            val post = Post(title, text, Date(), "users/${user!!.id!!}")
+            val post = Post("", title, text, Date(), "users/${user!!.id!!}")
 
             boardInterface.writePost(post, user, onComplete = {
                 setResult(RESULT_OK)

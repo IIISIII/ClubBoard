@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
 import edu.sns.clubboard.adapter.FBAuthorization
-import edu.sns.clubboard.data.Permission
 import edu.sns.clubboard.databinding.ActivityLoginBinding
 import edu.sns.clubboard.port.AuthInterface
 

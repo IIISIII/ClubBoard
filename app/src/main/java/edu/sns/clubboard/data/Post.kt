@@ -2,7 +2,7 @@ package edu.sns.clubboard.data
 
 import java.util.Date
 
-data class Post(val title: String, val text: String, val date: Date, val authorId: String)
+data class Post(val id: String, val title: String, val text: String, val date: Date, val authorId: String)
 {
     companion object
     {

@@ -10,6 +10,8 @@ interface AuthInterface
 
     fun getUserInfo(): User?
 
+    fun getUserInfo(id: String, onComplete: (User?) -> Unit)
+
     fun authenticate(user: User?)
 
     fun isAuthenticated(user: User?): Boolean

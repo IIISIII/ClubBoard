@@ -14,11 +14,13 @@ interface ClubInterface
 
     fun getClubListLimited(reset: Boolean, limit: Long, onComplete: (List<Club>) -> Unit): Boolean
 
-    fun getUserClubListLimited(user: User, reset: Boolean, limit: Long, onComplete: (List<Club>) -> Unit): Boolean
+    fun getUserClubList(user: User, reset: Boolean, limit: Long, onComplete: (List<Club>) -> Unit): Boolean
 
-    fun isMember(user: User, club: Club): Boolean
+    suspend fun isMember(user: User, club: Club): Boolean
 
-    fun isManager(user: User, club: Club): Boolean
+    suspend fun isManager(user: User, club: Club): Boolean
 
-    fun isMaster(user: User, club: Club): Boolean
+    suspend fun isMaster(user: User, club: Club): Boolean
+
+    suspend fun getPermissionLevel(user: User, club: Club): Int?
 }

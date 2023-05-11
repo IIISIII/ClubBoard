@@ -103,7 +103,7 @@ class ClubActivity : AppCompatActivity()
                 writeBtn = view.findViewById(R.id.write_post_btn)
                 postList = view.findViewById(R.id.post_list)
 
-                postAdapter = PostAdapter()
+                postAdapter = PostAdapter(board)
                 postList.adapter = postAdapter
 
                 val resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { activityResult ->
@@ -130,10 +130,9 @@ class ClubActivity : AppCompatActivity()
             {
                 postAdapter.setPostList(list as ArrayList<Post>)
 
-                if(boardInterface.havePermission(user, board))
-                    writeBtn.visibility = View.VISIBLE
-                else
-                    writeBtn.visibility = View.GONE
+                boardInterface.checkWritePermission(user, board, onComplete = {
+                    writeBtn.visibility = if(it) View.VISIBLE else View.GONE
+                })
             }
         }
     }

@@ -2,12 +2,11 @@ package edu.sns.clubboard.adapter
 
 import android.util.Log
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import edu.sns.clubboard.data.Permission
 import edu.sns.clubboard.data.User
 import edu.sns.clubboard.port.AuthInterface
 
@@ -59,6 +58,7 @@ class FBAuthorization: AuthInterface
         } ?: onComplete(null)
     }
 
+
     override fun login(id: String, pw: String, onSuccess: () -> Unit, onFailed: () -> Unit)
     {
         users.whereEqualTo(User.KEY_LOGINID, id).get().addOnCompleteListener {
@@ -86,6 +86,20 @@ class FBAuthorization: AuthInterface
     }
 
     override fun getUserInfo(): User? = userInfo
+
+    override fun getUserInfo(id: String, onComplete: (User?) -> Unit)
+    {
+        users.whereEqualTo(FieldPath.documentId(), id).get().addOnCompleteListener {
+            if(it.isSuccessful) {
+                val doc = it.result.documents.firstOrNull()
+                doc?.let { document ->
+                    onComplete(documentToUserInfo(document))
+                } ?: onComplete(null)
+            }
+            else
+                onComplete(null)
+        }
+    }
 
     override fun authenticate(user: User?)
     {
@@ -155,18 +169,9 @@ class FBAuthorization: AuthInterface
             val loginId = document.getString(User.KEY_LOGINID)
             val profileImg = document.getString(User.KEY_PROFILE_IMG)
 
-            var permissions: List<Permission>? = null
-            try {
-                val plist = document.get(User.KEY_PERMISSIONS) as List<*>
-                permissions = plist.map {
-                    Permission((it as DocumentReference).id)
-                }
-                Log.i("testAAA", permissions.toString())
-            } catch (err: Exception) {}
-
             val admin = document.getBoolean(User.KEY_ADMIN) ?: false
 
-            User(document.id, studentId!!, name!!, phone!!, email!!, nickname!!, loginId!!, permissions, profileImg, admin)
+            User(document.id, studentId!!, name!!, phone!!, email!!, nickname!!, loginId!!, profileImg, admin)
         } catch (err: Exception) {
             null
         }

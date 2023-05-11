@@ -8,12 +8,15 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import edu.sns.clubboard.data.*
 import edu.sns.clubboard.port.ClubInterface
+import kotlinx.coroutines.tasks.await
 
 class FBClub: ClubInterface
 {
     private val db = Firebase.firestore
 
     private val clubs = db.collection("clubs")
+
+    private val relations = db.collection("relations")
 
     private val boards = db.collection("boards")
 
@@ -38,12 +41,7 @@ class FBClub: ClubInterface
             it.result.let { res ->
                 val id = res.id
                 val name = res.getString(Club.KEY_NAME)
-                val members = res.get(Club.KEY_MEMBERS) as List<*>?
-                val memberIds = members as List<String>
-                val joinPermission = Permission(res.getDocumentReference(Club.KEY_JOIN_PERMISSION)!!.id)
-                val managePermission = Permission(res.getDocumentReference(Club.KEY_MANAGE_PERMISSION)!!.id)
-                val masterPermission = Permission(res.getDocumentReference(Club.KEY_MASTER_PERMISSION)!!.id)
-                val club = Club(id, name!!, memberIds, joinPermission, managePermission, masterPermission)
+                val club = Club(id, name!!)
 
                 boards.whereEqualTo("parent", clubRef).get().addOnCompleteListener { resB ->
                     if(!resB.isSuccessful) {
@@ -55,11 +53,8 @@ class FBClub: ClubInterface
                         val boardList = list.map { item ->
                             val id = item.id
                             val name = item.getString(Board.KEY_NAME)
-                            val permissions = item.get(Board.KEY_PERMISSIONS) as List<*>?
-                            val per = permissions?.map { id ->
-                                Permission((id as DocumentReference).id)
-                            }
-                            Board(id, name!!, club, per)
+                            val permissionLevel = item.getLong(Board.KEY_PERMISSION_LEVEL)
+                            Board(id, name!!, club, permissionLevel)
                         }
                         onComplete(club, boardList)
                     }
@@ -75,10 +70,12 @@ class FBClub: ClubInterface
 
     override fun getClubMembers(club: Club, onComplete: (List<User>) -> Unit, onFailed: () -> Unit)
     {
-        db.collection("users").whereIn(FieldPath.documentId(), club.memberIds).get().addOnCompleteListener {
+        val clubRef = clubs.document(club.id)
+
+        relations.whereEqualTo("club", clubRef).get().addOnCompleteListener {
             if(it.isSuccessful) {
                 it.result.documents.map { doc ->
-                    Log.i("memberIds", doc.id)
+                    Log.i("membersIds", doc.getDocumentReference("user").toString())
                 }
             }
             else
@@ -111,12 +108,7 @@ class FBClub: ClubInterface
                 for(item in it.result.documents) {
                     val id = item.id
                     val name = item.getString(Club.KEY_NAME)
-                    val members = item.get(Club.KEY_MEMBERS) as List<*>?
-                    val memberIds = members as List<String>
-                    val joinPermission = Permission(item.getDocumentReference(Club.KEY_JOIN_PERMISSION)!!.id)
-                    val managePermission = Permission(item.getDocumentReference(Club.KEY_MANAGE_PERMISSION)!!.id)
-                    val masterPermission = Permission(item.getDocumentReference(Club.KEY_MASTER_PERMISSION)!!.id)
-                    list.add(Club(id, name!!, memberIds, joinPermission, managePermission, masterPermission))
+                    list.add(Club(id, name!!))
                 }
                 lastDoc = it.result.documents.last()
                 onComplete(list)
@@ -126,59 +118,40 @@ class FBClub: ClubInterface
         return true
     }
 
-    private var queryFlag2 = false
-    private var lastDoc2: DocumentSnapshot? = null
-
-    override fun getUserClubListLimited(user: User, reset: Boolean, limit: Long, onComplete: (List<Club>) -> Unit): Boolean
+    override fun getUserClubList(user: User, reset: Boolean, limit: Long, onComplete: (List<Club>) -> Unit): Boolean
     {
-        if(reset)
-            lastDoc2 = null
+        val userRef = db.collection("users").document(user.id!!)
 
-        if(queryFlag2)
-            return false
+        relations.whereEqualTo("uesr", userRef).get().addOnCompleteListener {
 
-        queryFlag2 = true
-        val lim = if(limit > 100) 100 else limit
-
-        val query = if(lastDoc2 != null)
-            clubs.whereArrayContains(Club.KEY_MEMBERS, user.id!!).startAfter(lastDoc2).limit(lim)
-        else
-            clubs.whereArrayContains(Club.KEY_MEMBERS, user.id!!).limit(lim)
-
-        query.get().addOnCompleteListener {
-            if(it.isSuccessful) {
-                val list = ArrayList<Club>()
-                for(item in it.result.documents) {
-                    val id = item.id
-                    val name = item.getString(Club.KEY_NAME)
-                    val members = item.get(Club.KEY_MEMBERS) as List<*>?
-                    val memberIds = members as List<String>
-                    val joinPermission = Permission(item.getDocumentReference(Club.KEY_JOIN_PERMISSION)!!.id)
-                    val managePermission = Permission(item.getDocumentReference(Club.KEY_MANAGE_PERMISSION)!!.id)
-                    val masterPermission = Permission(item.getDocumentReference(Club.KEY_MASTER_PERMISSION)!!.id)
-                    list.add(Club(id, name!!, memberIds, joinPermission, managePermission, masterPermission))
-                }
-                lastDoc2 = it.result.documents.last()
-                onComplete(list)
-            }
-            queryFlag2 = false
         }
+
         return true
     }
 
-    override fun isMember(user: User, club: Club): Boolean
+    override suspend fun isMember(user: User, club: Club): Boolean
     {
-        return user.permissions?.contains(club.joinPermission) == true
+        return getPermissionLevel(user, club) == 2
     }
 
-    override fun isManager(user: User, club: Club): Boolean
+    override suspend fun isManager(user: User, club: Club): Boolean
     {
-        return user.permissions?.contains(club.managePermission) == true
+        return getPermissionLevel(user, club) == 1
     }
 
-    override fun isMaster(user: User, club: Club): Boolean
+    override suspend fun isMaster(user: User, club: Club): Boolean
     {
-        return user.permissions?.contains(club.masterPermission) == true
+        return getPermissionLevel(user, club) == 0
     }
 
+    override suspend fun getPermissionLevel(user: User, club: Club): Int?
+    {
+        val userRef = db.collection("users").document(user.id!!)
+
+        val relation = relations.whereEqualTo("user", userRef).get().await().firstOrNull()
+        relation?.let {
+            return it.getLong("permissionLevel") as Int
+        }
+        return null
+    }
 }

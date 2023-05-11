@@ -1,6 +1,6 @@
 package edu.sns.clubboard.data
 
-data class User(var id: String?, val studentId: String, val name: String, val phone: String, val email: String, var nickname: String = "user", var loginId: String, var permissions: List<Permission>? = null, var imagePath: String? = null, val admin: Boolean = false)
+data class User(var id: String?, val studentId: String, val name: String, val phone: String, val email: String, var nickname: String = "user", var loginId: String, var imagePath: String? = null, val admin: Boolean = false)
 {
     companion object
     {
@@ -11,7 +11,6 @@ data class User(var id: String?, val studentId: String, val name: String, val ph
         const val KEY_NICKNAME = "nickname"
         const val KEY_LOGINID = "login_id"
         const val KEY_PROFILE_IMG = "image_path"
-        const val KEY_PERMISSIONS = "permissions"
         const val KEY_ADMIN = "admin"
     }
 

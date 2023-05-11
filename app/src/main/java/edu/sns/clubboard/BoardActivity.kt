@@ -28,9 +28,6 @@ class BoardActivity : AppCompatActivity() {
         setSupportActionBar(binding.boardToolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        listAdapter = PostAdapter()
-        binding.boardList.adapter = listAdapter
-
         val boardId = intent.getStringExtra("board_id")
         boardId?.let {
             boardInterface = FBBoard(it)
@@ -57,6 +54,9 @@ class BoardActivity : AppCompatActivity() {
     private fun onSuccess(board: Board)
     {
         supportActionBar?.title = board.name
+
+        listAdapter = PostAdapter(board)
+        binding.boardList.adapter = listAdapter
 
         boardInterface.getPostListLimited(true, 30, onComplete = {
             listAdapter.setPostList(it as ArrayList<Post>)
