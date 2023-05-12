@@ -52,7 +52,7 @@ class ClubActivity : AppCompatActivity()
         tabLayout = binding.boardTab
 
         intent.getStringExtra("club_id")?.let {
-            clubInterface.load(it, onComplete = { club, boardList ->
+            clubInterface.getClubData(it, onComplete = { club, boardList ->
                 clubInterface.getClubMembers(club, onComplete = {}, onFailed = {})
                 init(club, boardList)
             }, onFailed = {

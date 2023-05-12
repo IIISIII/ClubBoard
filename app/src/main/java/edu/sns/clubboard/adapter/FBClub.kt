@@ -1,5 +1,6 @@
 package edu.sns.clubboard.adapter
 
+import android.graphics.Bitmap
 import android.util.Log
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
@@ -29,7 +30,7 @@ class FBClub: ClubInterface
             }
     }
 
-    override fun load(id: String, onComplete: (Club, List<Board>) -> Unit, onFailed: () -> Unit)
+    override fun getClubData(id: String, onComplete: (Club, List<Board>) -> Unit, onFailed: () -> Unit)
     {
         val clubRef = clubs.document(id)
         clubRef.get().addOnCompleteListener {
@@ -63,7 +64,7 @@ class FBClub: ClubInterface
         }
     }
 
-    override fun createClub(clubName: String, user: User, onComplete: (Club) -> Unit, onFailed: () -> Unit)
+    override fun createClub(clubName: String, description: String, img: Bitmap?, user: User, onComplete: (Club) -> Unit, onFailed: () -> Unit)
     {
 
     }
@@ -98,9 +99,9 @@ class FBClub: ClubInterface
         val lim = if(limit > 100) 100 else limit
 
         val query = if(lastDoc != null)
-            clubs.startAfter(lastDoc).limit(lim)
+            clubs.whereEqualTo(Club.KEY_ACTIVATE, true).startAfter(lastDoc).limit(lim)
         else
-            clubs.limit(lim)
+            clubs.whereEqualTo(Club.KEY_ACTIVATE, true).limit(lim)
 
         query.get().addOnCompleteListener {
             if(it.isSuccessful) {
@@ -118,12 +119,31 @@ class FBClub: ClubInterface
         return true
     }
 
-    override fun getUserClubList(user: User, reset: Boolean, limit: Long, onComplete: (List<Club>) -> Unit): Boolean
+    override fun getUserClubList(user: User, onComplete: (List<Club>) -> Unit): Boolean
     {
         val userRef = db.collection("users").document(user.id!!)
 
-        relations.whereEqualTo("uesr", userRef).get().addOnCompleteListener {
+        var clubList = ArrayList<Club>()
 
+        relations.whereEqualTo("user", userRef).get().addOnCompleteListener {
+            if(it.isSuccessful) {
+                val clubRefs = it.result.documents.map { doc ->
+                    doc.getDocumentReference("club")
+                }
+                clubs.whereEqualTo(Club.KEY_ACTIVATE, true).whereIn(FieldPath.documentId(), clubRefs).get().addOnCompleteListener { res ->
+                    if(res.isSuccessful) {
+                        for(item in res.result.documents) {
+                            val id = item.id
+                            val name = item.getString(Club.KEY_NAME)
+                            clubList.add(Club(id, name!!))
+                        }
+                    }
+
+                    onComplete(clubList)
+                }
+            }
+            else
+                onComplete(clubList)
         }
 
         return true

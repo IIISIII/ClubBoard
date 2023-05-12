@@ -56,6 +56,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onDestroy()
+    {
+        super.onDestroy()
+
+        FBAuthorization.remove()
+    }
+
     private fun init()
     {
         binding.searchClub.setOnClickListener {

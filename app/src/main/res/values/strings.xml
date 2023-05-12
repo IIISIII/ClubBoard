@@ -1,15 +1,17 @@
 <resources>
     <string name="app_name">ClubBoard</string>
-    <string name="title_activity_board">BoardActivity</string>
-    <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
-
-    <string name="hello_first_fragment">Hello first fragment</string>
-    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
-    <string name="title_activity_club">ClubActivity</string>
-    <string name="tab_text_1">Tab 1</string>
-    <string name="tab_text_2">Tab 2</string>
+    <string name="main_promote_recruit">Promote/Recruit</string>
+    <string name="main_openboard">OpenBoard</string>
+    <string name="main_make_club">Make Club</string>
+    <string name="main_myclub">My Club</string>
+    <string name="main_search_club">Search Club</string>
+    <string name="main_board_preview">Board Preview</string>
+    <string name="text_id">Id</string>
+    <string name="text_pw">Password</string>
+    <string name="text_phone">Phone</string>
+    <string name="text_student_id">Student Id</string>
+    <string name="text_name">Name</string>
+    <string name="text_mail">E-mail</string>
+    <string name="text_nickname">Nickname</string>
+    <string name="text_check_availablility">Check Availability</string>
 </resources>

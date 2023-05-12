@@ -2,7 +2,7 @@ package edu.sns.clubboard.data
 
 import java.util.Date
 
-data class Post(val id: String, val title: String, val text: String, val date: Date, val authorId: String)
+data class Post(val id: String, val title: String, val text: String, val date: Date, val authorId: String, val postType: Long = TYPE_NORMAL)
 {
     companion object
     {
@@ -10,6 +10,10 @@ data class Post(val id: String, val title: String, val text: String, val date: D
         const val KEY_TEXT = "text"
         const val KEY_DATE = "date"
         const val KEY_AUTHOR = "author"
+
+        const val TYPE_NORMAL = 0L
+        const val TYPE_RECRUIT = 1L
+        const val TYPE_PROMOTION = 2L
     }
 
     fun toHashMap(): HashMap<String, Any> = hashMapOf(
