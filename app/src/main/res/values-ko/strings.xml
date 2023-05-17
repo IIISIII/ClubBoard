@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ClubBoard</string>
     <string name="main_search_club">동아리 찾기</string>
     <string name="main_myclub">내 동아리</string>
     <string name="main_make_club">동아리 개설</string>
     <string name="main_openboard">자유게시판</string>
     <string name="main_promote_recruit">동아리 홍보/모집</string>
-    <string name="main_board_preview">게시판 미리보기</string>
+    <string name="main_board_preview">게시판 즐겨찾기</string>
     <string name="text_id">아이디</string>
     <string name="text_pw">비밀번호</string>
     <string name="text_phone">전화번호</string>
@@ -15,4 +14,9 @@
     <string name="text_mail">이메일</string>
     <string name="text_nickname">닉네임</string>
     <string name="text_check_availablility">중복 확인</string>
+    <string name="text_check_pw">비밀번호 확인</string>
+    <string name="text_next">다음으로</string>
+    <string name="text_previous">이전으로</string>
+    <string name="text_submit">확인</string>
+    <string name="app_name" translatable="false">한성대 동아리</string>
 </resources>

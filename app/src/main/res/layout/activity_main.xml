@@ -21,10 +21,10 @@
         app:title="@string/app_name"
         app:titleTextColor="@color/white" />
 
-    <Button
+    <android.widget.Button
         android:id="@+id/search_club"
         android:layout_width="wrap_content"
-        android:layout_height="32dp"
+        android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:background="@drawable/searchbutton_background"
         android:drawableLeft="@drawable/ic_baseline_search_24"
@@ -43,7 +43,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraintLayout2"
         android:layout_width="0dp"
-        android:layout_height="80dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
@@ -55,9 +55,9 @@
         <Button
             android:id="@+id/button"
             android:layout_width="wrap_content"
-            android:layout_height="60dp"
+            android:layout_height="wrap_content"
             android:background="@drawable/circlebutton_background"
-            android:drawableTop="@drawable/ic_baseline_notifications_24"
+            android:drawableTop="@drawable/ic_baseline_group_24"
             android:padding="2dp"
             android:text="@string/main_myclub"
             android:textAllCaps="false"
@@ -70,9 +70,9 @@
         <Button
             android:id="@+id/button2"
             android:layout_width="wrap_content"
-            android:layout_height="60dp"
+            android:layout_height="wrap_content"
             android:background="@drawable/circlebutton_background"
-            android:drawableTop="@drawable/ic_baseline_notifications_24"
+            android:drawableTop="@drawable/ic_baseline_volume_up_24"
             android:padding="2dp"
             android:text="@string/main_promote_recruit"
             android:textAllCaps="false"
@@ -86,7 +86,7 @@
         <Button
             android:id="@+id/button3"
             android:layout_width="wrap_content"
-            android:layout_height="60dp"
+            android:layout_height="wrap_content"
             android:background="@drawable/circlebutton_background"
             android:drawableTop="@drawable/ic_baseline_assignment_24"
             android:padding="2dp"
@@ -102,7 +102,7 @@
         <Button
             android:id="@+id/free_board_btn"
             android:layout_width="wrap_content"
-            android:layout_height="60dp"
+            android:layout_height="wrap_content"
             android:background="@drawable/circlebutton_background"
             android:drawableTop="@drawable/ic_baseline_create_24"
             android:padding="2dp"
@@ -134,21 +134,21 @@
             android:id="@+id/textView"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginStart="32dp"
+            android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
             android:layout_marginEnd="32dp"
             android:layout_marginBottom="8dp"
             android:gravity="center|left"
             android:text="@string/main_board_preview"
             android:textColor="@color/white"
-            android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="@+id/imageButton7"
-            app:layout_constraintEnd_toStartOf="@+id/imageButton7"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="@+id/preview_config"
+            app:layout_constraintEnd_toStartOf="@+id/preview_config"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/imageButton7" />
+            app:layout_constraintTop_toTopOf="@+id/preview_config" />
 
         <ImageButton
-            android:id="@+id/imageButton7"
+            android:id="@+id/preview_config"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:layout_marginTop="4dp"
@@ -160,16 +160,45 @@
             tools:ignore="TouchTargetSizeCheck,SpeakableTextPresentCheck" />
 
         <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/preview_list"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginStart="1dp"
             android:layout_marginTop="4dp"
             android:layout_marginEnd="1dp"
             android:background="#f6f6f6"
+            android:clipToPadding="false"
+            android:padding="8dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/imageButton7" />
+            app:layout_constraintTop_toBottomOf="@+id/preview_config" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/preview_progress_background"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="1dp"
+            android:layout_marginEnd="1dp"
+            android:layout_marginBottom="1dp"
+            android:background="#99ffffff"
+            android:clickable="true"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/preview_list">
+
+            <ProgressBar
+                android:id="@+id/preview_progress"
+                style="?android:attr/progressBarStyle"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

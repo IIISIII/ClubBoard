@@ -2,13 +2,17 @@ package edu.sns.clubboard.adapter
 
 import android.util.Log
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.AggregateSource
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import edu.sns.clubboard.data.Board
 import edu.sns.clubboard.data.User
 import edu.sns.clubboard.port.AuthInterface
+import kotlinx.coroutines.tasks.await
 
 class FBAuthorization: AuthInterface
 {
@@ -155,6 +159,46 @@ class FBAuthorization: AuthInterface
         return when(auth.currentUser) {
             null -> false
             else -> true
+        }
+    }
+
+    override suspend fun isValidId(id: String): Boolean
+    {
+        val result = users.whereEqualTo(User.KEY_LOGINID, id).count().get(AggregateSource.SERVER).await()
+
+        return result.count == 0L
+    }
+
+    override suspend fun isValidMail(mail: String): Boolean
+    {
+        val result = users.whereEqualTo(User.KEY_EMAIL, mail).count().get(AggregateSource.SERVER).await()
+
+        return result.count == 0L
+    }
+
+    override suspend fun isValidNickname(nickname: String): Boolean
+    {
+        val result = users.whereEqualTo(User.KEY_NICKNAME, nickname).count().get(AggregateSource.SERVER).await()
+
+        return result.count == 0L
+    }
+
+    override fun getPreviewList(user: User, onSuccess: (boardList: List<String>) -> Unit, onFailed: () -> Unit)
+    {
+        users.document(user.id!!).get().addOnCompleteListener {
+            if(it.isSuccessful) {
+                it.result.let { doc ->
+                    val list = doc.get(User.KEY_PREVIEW_LIST) as List<*>
+                    val boardList = list.map { item ->
+                        val docRef = item as DocumentReference
+                        docRef.id
+                    }
+                    onSuccess(boardList)
+                }
+            }
+            else {
+                onFailed()
+            }
         }
     }
 

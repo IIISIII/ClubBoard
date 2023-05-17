@@ -21,4 +21,12 @@ interface AuthInterface
     fun signUp(user: User, password: String, onSuccess: () -> Unit, onFailed: () -> Unit)
 
     fun isLogined(): Boolean
+
+    fun getPreviewList(user: User, onSuccess: (boardList: List<String>) -> Unit, onFailed: () -> Unit)
+
+    suspend fun isValidId(id: String): Boolean
+
+    suspend fun isValidMail(mail: String): Boolean
+
+    suspend fun isValidNickname(nickname: String): Boolean
 }

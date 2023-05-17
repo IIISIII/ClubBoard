@@ -7,6 +7,7 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import edu.sns.clubboard.data.Board
+import edu.sns.clubboard.data.Club
 import edu.sns.clubboard.data.Post
 import edu.sns.clubboard.data.User
 import edu.sns.clubboard.port.BoardInterface
@@ -15,53 +16,36 @@ class FBBoard: BoardInterface
 {
     private val db = Firebase.firestore
 
+    private val clubs = db.collection("clubs")
+
     private val boards = db.collection("boards")
 
     private val relations = db.collection("relations")
 
-    private var boardData: Board? = null
 
-    private var boardRef: DocumentReference
-
-    constructor(id: String)
+    override fun getBoardData(id: String, onSuccess: (Board) -> Unit, onFailed: () -> Unit)
     {
-        boardRef = boards.document(id)
-    }
-
-    constructor(board: Board): this(board.id)
-    {
-        boardData = board
-    }
-
-    override fun load(onSuccess: (Board) -> Unit, onFailed: () -> Unit)
-    {
-        if(boardData == null) {
-            boardRef.get().addOnCompleteListener {
-                if(it.isSuccessful) {
-                    it.result.run {
-                        val name = this.getString(Board.KEY_NAME) ?: ""
-                        val permissionLevel = this.getLong(Board.KEY_PERMISSION_LEVEL)
-                        boardData = Board(this.id, name, null, permissionLevel)
-                        onSuccess(boardData!!)
-                    }
+        boards.document(id).get().addOnCompleteListener {
+            if(it.isSuccessful) {
+                it.result.run {
+                    val name = this.getString(Board.KEY_NAME) ?: ""
+                    val permissionLevel = this.getLong(Board.KEY_PERMISSION_LEVEL)
+                    val board = Board(this.id, name, null, permissionLevel)
+                    onSuccess(board)
                 }
-                else
-                    onFailed()
             }
-
-            return
+            else
+                onFailed()
         }
-
-        onSuccess(boardData!!)
     }
 
-    override fun writePost(post: Post, author: User, onComplete: () -> Unit): Boolean
+    override fun writePost(board: Board, post: Post, author: User, onComplete: () -> Unit): Boolean
     {
         try {
             val hashMap = post.toHashMap()
             hashMap[Post.KEY_AUTHOR] = db.document(hashMap[Post.KEY_AUTHOR] as String)
 
-            boardRef.collection("posts").document().set(hashMap).addOnCompleteListener {
+            boards.document(board.id).collection("posts").document().set(hashMap).addOnCompleteListener {
                 onComplete()
             }
             return true
@@ -69,9 +53,9 @@ class FBBoard: BoardInterface
         return false
     }
 
-    override fun readPost(id: String, onComplete: (Post?) -> Unit): Boolean
+    override fun readPost(board: Board, id: String, onComplete: (Post?) -> Unit): Boolean
     {
-        db.collectionGroup("posts").whereEqualTo(FieldPath.documentId(), id).get().addOnCompleteListener {
+        boards.document(board.id).collection("posts").whereEqualTo(FieldPath.documentId(), id).get().addOnCompleteListener {
             if(it.isSuccessful) {
                 val doc = it.result.documents.firstOrNull()
                 doc?.let { documentSnapshot ->
@@ -85,55 +69,91 @@ class FBBoard: BoardInterface
         return false
     }
 
-    override fun deletePost(post: Post, user: User, onComplete: () -> Unit): Boolean
+    override fun deletePost(board: Board, post: Post, user: User, onComplete: () -> Unit): Boolean
     {
         //club의 managePermission 또는 masterPermission을 가지고 있을때만 작동, 또는 admin 속성이 true일 때 작동
 
         return false
     }
 
-    override fun getBoardData(): Board? = boardData
+    override fun getBoardListByIdList(list: List<String>, onSuccess: (List<Board>) -> Unit, onFailed: () -> Unit)
+    {
+        boards.whereIn(FieldPath.documentId(), list).get().addOnCompleteListener {
+            if(it.isSuccessful) {
+                val boardList = ArrayList<Board>()
+                for(doc in it.result.documents) {
+                    val name = doc.getString(Board.KEY_NAME) ?: ""
+                    val permissionLevel = doc.getLong(Board.KEY_PERMISSION_LEVEL)
+                    val parentRef = doc.getDocumentReference(Board.KEY_PARENT)
+                    val board = Board(doc.id, name, null, permissionLevel, parentRef?.id)
+                    boardList.add(board)
+                }
+                onSuccess(boardList)
+            }
+            else
+                onFailed()
+        }
+    }
 
-    override fun getPostList(): List<Post>?
+    override fun getParent(board: Board, onSuccess: (Club?) -> Unit, onFailed: () -> Unit)
+    {
+        if(board.parentId == null) {
+            onSuccess(null)
+            return
+        }
+
+        clubs.document(board.parentId!!).get().addOnCompleteListener {
+            if(it.isSuccessful) {
+                it.result.let { doc ->
+                    val club = Club(doc.id, doc.getString(Club.KEY_NAME) ?: "")
+                    onSuccess(club)
+                }
+            }
+            else
+                onFailed()
+        }
+    }
+
+    override fun getPostList(board: Board): List<Post>?
     {
 
         return null
     }
 
     private var queryFlag = false
+    private var boardD: Board? = null
     private var lastDoc: DocumentSnapshot? = null
 
-    override fun getPostListLimited(reset:Boolean, limit: Long, onComplete: (List<Post>) -> Unit): Boolean
+    override fun getPostListLimited(board: Board, reset: Boolean, limit: Long, onComplete: (List<Post>) -> Unit): Boolean
     {
-        if(reset)
+        if(reset || boardD != board)
             lastDoc = null
 
         if(queryFlag)
             return false
 
-        val posts = boardRef.collection("posts")
+        val posts = boards.document(board.id).collection("posts")
 
         queryFlag = true
         val lim = if(limit > 100) 100 else limit
-        boardData?.let {
-            val query = if(lastDoc != null)
-                posts.startAfter(lastDoc).limit(lim).orderBy(Post.KEY_DATE, Query.Direction.DESCENDING)
-            else
-                posts.limit(lim).orderBy(Post.KEY_DATE, Query.Direction.DESCENDING)
 
-            query.get().addOnCompleteListener {
-                if(it.isSuccessful) {
-                    val list = ArrayList<Post>()
+        val query = if(lastDoc != null)
+            posts.startAfter(lastDoc).limit(lim).orderBy(Post.KEY_DATE, Query.Direction.DESCENDING)
+        else
+            posts.limit(lim).orderBy(Post.KEY_DATE, Query.Direction.DESCENDING)
 
-                    for(doc in it.result.documents) {
-                        list.add(documentToPost(doc))
-                    }
-                    if(it.result.documents.isNotEmpty())
-                        lastDoc = it.result.documents.last()
-                    onComplete(list)
+        query.get().addOnCompleteListener {
+            if(it.isSuccessful) {
+                val list = ArrayList<Post>()
+
+                for(doc in it.result.documents) {
+                    list.add(documentToPost(doc))
                 }
-                queryFlag = false
+                if(it.result.documents.isNotEmpty())
+                    lastDoc = it.result.documents.last()
+                onComplete(list)
             }
+            queryFlag = false
         }
         return true
     }

@@ -5,12 +5,15 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.Toast
 import edu.sns.clubboard.adapter.FBAuthorization
+import edu.sns.clubboard.adapter.FBBoard
+import edu.sns.clubboard.data.Board
 import edu.sns.clubboard.databinding.ActivityMainBinding
 import edu.sns.clubboard.port.AuthInterface
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import edu.sns.clubboard.port.BoardInterface
+import edu.sns.clubboard.ui.PreviewAdapter
 
 class MainActivity : AppCompatActivity() {
     private val binding by lazy {
@@ -19,13 +22,16 @@ class MainActivity : AppCompatActivity() {
 
     private val auth : AuthInterface = FBAuthorization.getInstance()
 
+    private val boardInterface: BoardInterface = FBBoard()
+
+    private lateinit var adapter: PreviewAdapter
+
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
         setSupportActionBar(binding.toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         if(!auth.isLogined())
             moveToLoginActivity()
@@ -65,6 +71,20 @@ class MainActivity : AppCompatActivity() {
 
     private fun init()
     {
+        adapter = PreviewAdapter()
+        binding.previewList.adapter = adapter
+
+        auth.getPreviewList(auth.getUserInfo()!!, onSuccess = {
+            boardInterface.getBoardListByIdList(it, onSuccess = { boards ->
+                adapter.setList(boards as ArrayList<Board>)
+                loadingEnd()
+            }, onFailed = {
+                loadingEnd()
+            })
+        }, onFailed = {
+            loadingEnd()
+        })
+
         binding.searchClub.setOnClickListener {
             val intent = Intent(this, ClubListActivity::class.java)
             startActivity(intent)
@@ -75,6 +95,16 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra("board_id", "0")
             startActivity(intent)
         }
+    }
+
+    private fun loadingStart()
+    {
+        binding.previewProgressBackground.visibility = View.VISIBLE
+    }
+
+    private fun loadingEnd()
+    {
+        binding.previewProgressBackground.visibility = View.GONE
     }
 
     private fun moveToLoginActivity()

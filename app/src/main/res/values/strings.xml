@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ClubBoard</string>
+    <string name="app_name" translatable="false">HCA</string>
     <string name="main_promote_recruit">Promote/Recruit</string>
     <string name="main_openboard">OpenBoard</string>
     <string name="main_make_club">Make Club</string>
@@ -14,4 +14,8 @@
     <string name="text_mail">E-mail</string>
     <string name="text_nickname">Nickname</string>
     <string name="text_check_availablility">Check Availability</string>
+    <string name="text_check_pw">Check Password</string>
+    <string name="text_next">Next</string>
+    <string name="text_previous">Previous</string>
+    <string name="text_submit">Submit</string>
 </resources>

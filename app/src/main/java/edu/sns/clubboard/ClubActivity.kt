@@ -108,7 +108,7 @@ class ClubActivity : AppCompatActivity()
 
                 val resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { activityResult ->
                     if (activityResult.resultCode == Activity.RESULT_OK) {
-                        boardInterface.getPostListLimited(true, 30, onComplete = { list ->
+                        boardInterface.getPostListLimited(board, true, 30, onComplete = { list ->
                             init(list)
                         })
                     }
@@ -120,8 +120,8 @@ class ClubActivity : AppCompatActivity()
                     resultLauncher.launch(intent)
                 }
 
-                boardInterface = FBBoard(board)
-                boardInterface.getPostListLimited(true, 30, onComplete = {
+                boardInterface = FBBoard()
+                boardInterface.getPostListLimited(board, true, 30, onComplete = {
                     init(it)
                 })
             }

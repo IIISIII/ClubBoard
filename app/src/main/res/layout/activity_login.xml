@@ -32,6 +32,7 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/input_loginid"
+            style="@style/TextInputLayoutStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
@@ -49,10 +50,11 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/input_password"
+            style="@style/TextInputLayoutStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="16dp"
             android:layout_marginEnd="24dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -64,37 +66,56 @@
                 android:hint="비밀번호" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <Button
+        <android.widget.Button
             android:id="@+id/signup_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:background="@drawable/circlebutton_background"
             android:text="회원가입"
+            android:textColor="@color/black"
+            android:textSize="14sp"
             app:layout_constraintStart_toStartOf="@+id/input_password"
             app:layout_constraintTop_toBottomOf="@+id/input_password" />
 
-        <Button
+        <android.widget.Button
             android:id="@+id/button7"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="아이디 찾기"
+            android:background="@drawable/circlebutton_background"
+            android:text="ID/PW찾기"
+            android:textColor="@color/black"
+            android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="@+id/input_password"
             app:layout_constraintTop_toBottomOf="@+id/input_password" />
 
-        <Button
+        <android.widget.Button
             android:id="@+id/login_btn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="24dp"
-            android:background="@drawable/searchbutton_background"
+            android:background="@drawable/button_background"
             android:text="로그인"
+            android:textColor="@color/white"
+            android:textSize="20sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/signup_btn" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <ImageView
+        android:id="@+id/imageView2"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintBottom_toTopOf="@+id/constraintLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/login_toolbar"
+        app:srcCompat="@mipmap/app_logo" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

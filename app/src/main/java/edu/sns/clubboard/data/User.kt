@@ -12,6 +12,7 @@ data class User(var id: String?, val studentId: String, val name: String, val ph
         const val KEY_LOGINID = "login_id"
         const val KEY_PROFILE_IMG = "image_path"
         const val KEY_ADMIN = "admin"
+        const val KEY_PREVIEW_LIST = "preview_list"
     }
 
     fun toHashMap(): HashMap<String, Any?>
