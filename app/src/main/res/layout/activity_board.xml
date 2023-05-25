@@ -23,18 +23,31 @@
         android:id="@+id/board_list"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:paddingTop="8dp"
+        android:paddingBottom="64dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/board_toolbar" />
 
-    <Button
+    <android.widget.Button
         android:id="@+id/write_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:text="글쓰기"
+        android:background="@drawable/roundbutton_background"
+        android:drawableLeft="@drawable/ic_baseline_create_24"
+        android:drawablePadding="5dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:text="@string/text_write"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

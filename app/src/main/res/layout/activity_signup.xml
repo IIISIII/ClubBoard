@@ -51,7 +51,7 @@
         android:id="@+id/progress_background"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#99C8C8C8"
+        android:background="@color/loading_color"
         android:clickable="true"
         android:elevation="10dp"
         android:visibility="gone"

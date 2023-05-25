@@ -32,6 +32,9 @@ class WriteActivity : AppCompatActivity()
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
+        setSupportActionBar(binding.writeToolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
         val boardId = intent.getStringExtra("board_id")
         boardId?.let {
             boardInterface.getBoardData(boardId, onSuccess = {
@@ -43,17 +46,24 @@ class WriteActivity : AppCompatActivity()
         }
 
         binding.completeBtn.setOnClickListener {
-            board?.let {
-                val user = auth.getUserInfo()
+            board?.run {
+                boardInterface.checkWritePermission(auth.getUserInfo()!!, this, onComplete = { isWriteable ->
+                    if(isWriteable) {
+                        val user = auth.getUserInfo()
 
-                val title = binding.postTitle.text.toString()
-                val text = binding.postText.text.toString()
+                        val title = binding.postTitle.text.toString()
+                        val text = binding.postText.text.toString()
 
-                val post = Post("", title, text, Date(), "users/${user!!.id!!}")
+                        val post = Post("", title, text, Date(), "users/${user!!.id!!}")
 
-                boardInterface.writePost(it, post, user, onComplete = {
-                    setResult(RESULT_OK)
-                    finish()
+                        boardInterface.writePost(this, post, user, onComplete = {
+                            setResult(RESULT_OK)
+                            finish()
+                        })
+                    }
+                    else {
+                        //alert
+                    }
                 })
             }
         }

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">HCA</string>
+    <string name="app_name">HCA</string>
     <string name="main_promote_recruit">Promote/Recruit</string>
     <string name="main_openboard">OpenBoard</string>
     <string name="main_make_club">Make Club</string>
@@ -18,4 +18,22 @@
     <string name="text_next">Next</string>
     <string name="text_previous">Previous</string>
     <string name="text_submit">Submit</string>
+    <string name="text_manage">Manage</string>
+    <string name="text_write">Write</string>
+    <string name="text_signin">Sign In</string>
+    <string name="text_signup">Sign Up</string>
+    <string name="text_search_idpw">Search ID/PW</string>
+    <string name="error_empty">Please enter %s</string>
+    <string name="text_club_name">Club Name</string>
+    <string name="text_description">Description</string>
+    <string name="error_exists">Same %s is already exists</string>
+    <string name="text_join_request">Request Join</string>
+    <string name="text_already_request">Processing Request</string>
+    <string name="text_load_post">Loading Post...</string>
+    <string name="text_send_request">Sending Request...</string>
+    <string name="error_post_not_found">Can\'t find this post</string>
+    <string name="error_no_permission_read_post">Don\'t have permission to read this post</string>
+    <string name="text_club_board">Club Board</string>
+    <string name="text_empty_board">Board is empty</string>
+    <string name="error_no_permission_read_board">Don\'t have permission to read this board</string>
 </resources>

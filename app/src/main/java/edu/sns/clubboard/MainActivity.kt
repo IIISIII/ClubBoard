@@ -35,10 +35,20 @@ class MainActivity : AppCompatActivity() {
 
         if(!auth.isLogined())
             moveToLoginActivity()
-        else if(!auth.isAuthenticated(null))
-            moveToAuthenticateActivity()
-        else
-            init()
+        else {
+            auth.getUserInfo(null) {
+                if(it != null) {
+                    auth.checkAuthenticated(it) {
+                        if (!it)
+                            moveToAuthenticateActivity()
+                        else
+                            init()
+                    }
+                }
+                else
+                    moveToLoginActivity()
+            }
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean
@@ -72,6 +82,23 @@ class MainActivity : AppCompatActivity() {
     private fun init()
     {
         adapter = PreviewAdapter()
+        adapter.setOnLoadingStart {
+            mainLoadingStart()
+        }
+        adapter.setOnLoadingEnd { havePermission, post, board ->
+            if(havePermission) {
+                val intent = Intent(this, PostActivity::class.java)
+                intent.putExtra("target_club", post!!.targetClubId)
+                intent.putExtra("board_name", board!!.name)
+                intent.putExtra("board_id", board.id)
+                intent.putExtra("post_id", post.id)
+                startActivity(intent)
+            }
+            else {
+                //error dialog have no permission
+            }
+            mainLoadingEnd()
+        }
         binding.previewList.adapter = adapter
 
         auth.getPreviewList(auth.getUserInfo()!!, onSuccess = {
@@ -90,6 +117,21 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        binding.myClubBtn.setOnClickListener {
+
+        }
+
+        binding.promoteBtn.setOnClickListener {
+            val intent = Intent(this, BoardActivity::class.java)
+            intent.putExtra("board_id", "1")
+            startActivity(intent)
+        }
+
+        binding.makeClubBtn.setOnClickListener {
+            val intent = Intent(this, MakeClubActivity::class.java)
+            startActivity(intent)
+        }
+
         binding.freeBoardBtn.setOnClickListener {
             val intent = Intent(this, BoardActivity::class.java)
             intent.putExtra("board_id", "0")
@@ -105,6 +147,16 @@ class MainActivity : AppCompatActivity() {
     private fun loadingEnd()
     {
         binding.previewProgressBackground.visibility = View.GONE
+    }
+
+    private fun mainLoadingStart()
+    {
+        binding.mainLoadingBackground.visibility = View.VISIBLE
+    }
+
+    private fun mainLoadingEnd()
+    {
+        binding.mainLoadingBackground.visibility = View.GONE
     }
 
     private fun moveToLoginActivity()

@@ -3,8 +3,10 @@ package edu.sns.clubboard
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import edu.sns.clubboard.adapter.FBAuthorization
+import edu.sns.clubboard.data.User
 import edu.sns.clubboard.databinding.ActivityLoginBinding
 import edu.sns.clubboard.port.AuthInterface
 
@@ -22,19 +24,20 @@ class LoginActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setSupportActionBar(binding.loginToolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         binding.signupBtn.setOnClickListener {
             startActivity(Intent(this, SignupActivity::class.java))
         }
 
         binding.loginBtn.setOnClickListener {
+            loadingStart()
+
             val id = binding.inputLoginid.editText?.text.toString()
             val password = binding.inputPassword.editText?.text.toString()
 
             try {
                 auth.login(id, password, onSuccess = {
-                    onSuccess()
+                    onSuccess(it)
                 }, onFailed = {
                     onFailed()
                 })
@@ -44,17 +47,29 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun onSuccess()
+    private fun loadingStart()
     {
-        auth.checkAuthenticated(null, onSuccess = {
-            moveToMainActivity()
-        }, onFailed = {
-            moveToAuthenticateActivity()
-        })
+        binding.loadingBackground.visibility = View.VISIBLE
+    }
+
+    private fun loadingEnd()
+    {
+        binding.loadingBackground.visibility = View.GONE
+    }
+
+    private fun onSuccess(user: User)
+    {
+        auth.checkAuthenticated(user) {
+            if(it)
+                moveToMainActivity()
+            else
+                moveToAuthenticateActivity()
+        }
     }
 
     private fun onFailed()
     {
+        loadingEnd()
         Toast.makeText(this, "failed", Toast.LENGTH_SHORT).show()
     }
 

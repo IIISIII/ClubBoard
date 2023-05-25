@@ -12,6 +12,20 @@
         android:theme="@style/Theme.ClubBoard"
         tools:targetApi="31">
         <activity
+            android:name=".RequestManageActivity"
+            android:exported="false">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        <activity
+            android:name=".MakeClubActivity"
+            android:exported="false">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        <activity
             android:name=".PostActivity"
             android:exported="false">
             <meta-data

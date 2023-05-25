@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -26,7 +27,12 @@ import edu.sns.clubboard.databinding.ActivityClubBinding
 import edu.sns.clubboard.port.AuthInterface
 import edu.sns.clubboard.port.BoardInterface
 import edu.sns.clubboard.port.ClubInterface
+import edu.sns.clubboard.ui.InfiniteScrollListener
+import edu.sns.clubboard.ui.ManageDialog
 import edu.sns.clubboard.ui.PostAdapter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class ClubActivity : AppCompatActivity()
 {
@@ -41,6 +47,8 @@ class ClubActivity : AppCompatActivity()
     private lateinit var viewPager: ViewPager2
     private lateinit var tabLayout: TabLayout
 
+    private var permissionLevel: Long? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
@@ -48,12 +56,15 @@ class ClubActivity : AppCompatActivity()
         setSupportActionBar(binding.clubToolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
+        loadingStart()
+
+        binding.clubTitle.isSelected = true
+
         viewPager = binding.boardViewPager
         tabLayout = binding.boardTab
 
         intent.getStringExtra("club_id")?.let {
             clubInterface.getClubData(it, onComplete = { club, boardList ->
-                clubInterface.getClubMembers(club, onComplete = {}, onFailed = {})
                 init(club, boardList)
             }, onFailed = {
                 finish()
@@ -63,14 +74,68 @@ class ClubActivity : AppCompatActivity()
 
     private fun init(club: Club, boardList: List<Board>)
     {
-        supportActionBar?.title = club.name
+        binding.clubTitle.text = club.name
 
-        viewPager.adapter = ViewPagerAdapter(supportFragmentManager, lifecycle, auth.getUserInfo()!!, club, boardList)
+        val user = auth.getUserInfo()!!
+
+        val manageDialog = ManageDialog()
+        manageDialog.setOnMenuItemClickListener(object: ManageDialog.OnMenuButtonClickListener {
+            override fun onFirstItemClick(manageDialog: ManageDialog)
+            {
+                manageDialog.dismiss()
+            }
+
+            override fun onSecondItemClick(manageDialog: ManageDialog)
+            {
+                val intent = Intent(this@ClubActivity, RequestManageActivity::class.java)
+                intent.putExtra("club_id", club.id)
+                startActivity(intent)
+
+                manageDialog.dismiss()
+            }
+
+            override fun onThirdItemClick(manageDialog: ManageDialog)
+            {
+                manageDialog.dismiss()
+            }
+        })
+
+        CoroutineScope(Dispatchers.IO).launch {
+            permissionLevel = clubInterface.getPermissionLevel(user, club)
+            runOnUiThread {
+                if(permissionLevel == User.PERMISSION_LEVEL_MASTER) {
+                    binding.manageBtn.visibility = View.VISIBLE
+                    binding.manageBtn.setOnClickListener {
+                        manageDialog.show(supportFragmentManager, "ManageDialog")
+                    }
+                }
+                else if(permissionLevel == null) {
+
+                    finish()
+                    return@runOnUiThread
+                }
+                loadingEnd()
+            }
+        }
+
+        viewPager.adapter = ViewPagerAdapter(supportFragmentManager, lifecycle, user, club, boardList)
 
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             val board = boardList[position]
             tab.text = board.name
         }.attach()
+    }
+
+    private fun loadingStart()
+    {
+        binding.mainLayout.visibility = View.GONE
+        binding.loadingBackground.visibility = View.VISIBLE
+    }
+
+    private fun loadingEnd()
+    {
+        binding.mainLayout.visibility = View.VISIBLE
+        binding.loadingBackground.visibility = View.GONE
     }
 
     class ViewPagerAdapter(fragmentManager: FragmentManager, lifecycle: Lifecycle, val user: User, val club: Club, val list: List<Board>): FragmentStateAdapter(fragmentManager, lifecycle)
@@ -87,15 +152,19 @@ class ClubActivity : AppCompatActivity()
 
         class TabFragment(val user: User, val club: Club, private val board: Board): Fragment(R.layout.board_fragment)
         {
-            private val clubInterface: ClubInterface = FBClub.getInstance()
+            private val pageItemCount = 10L
 
-            private lateinit var boardInterface: BoardInterface
+            private var boardInterface = FBBoard()
 
             private lateinit var writeBtn: Button
 
             private lateinit var postList: RecyclerView
 
             private lateinit var postAdapter: PostAdapter
+
+            private var alreadyInit = false
+
+            private var cantReadMore = false
 
             override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
                 super.onViewCreated(view, savedInstanceState)
@@ -104,11 +173,39 @@ class ClubActivity : AppCompatActivity()
                 postList = view.findViewById(R.id.post_list)
 
                 postAdapter = PostAdapter(board)
+                postAdapter.setOnItemClick { post, board ->
+                    val intent = Intent(context, PostActivity::class.java)
+                    intent.putExtra("target_club", club.id)
+                    intent.putExtra("board_name", board.name)
+                    intent.putExtra("board_id", board.id)
+                    intent.putExtra("post_id", post.id)
+                    startActivity(intent)
+                }
+                postAdapter.setOnItemLongClick { post, board ->
+
+                }
                 postList.adapter = postAdapter
+
+                val infiniteScrollListener = InfiniteScrollListener()
+                infiniteScrollListener.setItemSizeGettr {
+                    postAdapter.itemCount
+                }
+                infiniteScrollListener.setOnLoadingStart {
+                    if(!alreadyInit || this.cantReadMore)
+                        return@setOnLoadingStart
+                    boardInterface.getPostListLimited(board, false, pageItemCount, onComplete = { list, cantReadMore ->
+                        this.cantReadMore = cantReadMore
+                        postAdapter.addPostList(list as ArrayList<Post>)
+                        infiniteScrollListener.loadingEnd()
+                    })
+                }
+
+                postList.addOnScrollListener(infiniteScrollListener)
 
                 val resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { activityResult ->
                     if (activityResult.resultCode == Activity.RESULT_OK) {
-                        boardInterface.getPostListLimited(board, true, 30, onComplete = { list ->
+                        boardInterface.getPostListLimited(board, true, pageItemCount, onComplete = { list, cantReadMore ->
+                            this.cantReadMore = cantReadMore
                             init(list)
                         })
                     }
@@ -120,19 +217,23 @@ class ClubActivity : AppCompatActivity()
                     resultLauncher.launch(intent)
                 }
 
-                boardInterface = FBBoard()
-                boardInterface.getPostListLimited(board, true, 30, onComplete = {
-                    init(it)
+                boardInterface.getPostListLimited(board, true, pageItemCount, onComplete = { list, cantReadMore ->
+                    this.cantReadMore = cantReadMore
+                    init(list)
                 })
             }
 
             private fun init(list: List<Post>)
             {
+                postList.scrollToPosition(0)
+
                 postAdapter.setPostList(list as ArrayList<Post>)
 
                 boardInterface.checkWritePermission(user, board, onComplete = {
                     writeBtn.visibility = if(it) View.VISIBLE else View.GONE
                 })
+
+                alreadyInit = true
             }
         }
     }

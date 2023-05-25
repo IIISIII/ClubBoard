@@ -11,7 +11,7 @@ interface BoardInterface
 
     fun writePost(board: Board, post: Post, author: User, onComplete: () -> Unit): Boolean
 
-    fun readPost(board: Board, id: String, onComplete: (Post?) -> Unit): Boolean
+    fun readPost(boardId: String, postId: String, onComplete: (Post) -> Unit, onFailed: () -> Unit): Boolean
 
     fun deletePost(board: Board, post: Post, user: User, onComplete: () -> Unit): Boolean
 
@@ -21,7 +21,7 @@ interface BoardInterface
 
     fun getPostList(board: Board): List<Post>?
 
-    fun getPostListLimited(board: Board, reset: Boolean, limit: Long, onComplete: (List<Post>) -> Unit): Boolean
+    fun getPostListLimited(board: Board, reset: Boolean, limit: Long, onComplete: (List<Post>, Boolean) -> Unit): Boolean
 
     fun checkWritePermission(user: User, board: Board, onComplete: (Boolean) -> Unit)
 }

@@ -45,7 +45,7 @@ class FBAuthorization: AuthInterface
             if(it.isSuccessful) {
                 auth.currentUser?.let { ur ->
                     users.document(ur.uid).get().addOnCompleteListener { res ->
-                        if(res.isSuccessful) {
+                        if(res.isSuccessful && res.result.exists()) {
                             res.result.run {
                                 userInfo = documentToUserInfo(this)
                                 onComplete(userInfo)
@@ -63,16 +63,20 @@ class FBAuthorization: AuthInterface
     }
 
 
-    override fun login(id: String, pw: String, onSuccess: () -> Unit, onFailed: () -> Unit)
+    override fun login(id: String, pw: String, onSuccess: (user: User) -> Unit, onFailed: () -> Unit)
     {
         users.whereEqualTo(User.KEY_LOGINID, id).get().addOnCompleteListener {
             if(it.isSuccessful) {
                 val doc = it.result.documents.firstOrNull()
                 doc?.run {
                     userInfo = documentToUserInfo(this)
+                    if(userInfo == null) {
+                        onFailed()
+                        return@addOnCompleteListener
+                    }
                     auth.signInWithEmailAndPassword(userInfo?.email.toString(), pw).addOnCompleteListener { res ->
                         if (res.isSuccessful) {
-                            onSuccess()
+                            onSuccess(userInfo!!)
 
                             register(doc.id)
                         }
@@ -91,15 +95,16 @@ class FBAuthorization: AuthInterface
 
     override fun getUserInfo(): User? = userInfo
 
-    override fun getUserInfo(id: String, onComplete: (User?) -> Unit)
+    override fun getUserInfo(id: String?, onComplete: (User?) -> Unit)
     {
-        users.whereEqualTo(FieldPath.documentId(), id).get().addOnCompleteListener {
-            if(it.isSuccessful) {
-                val doc = it.result.documents.firstOrNull()
-                doc?.let { document ->
-                    onComplete(documentToUserInfo(document))
-                } ?: onComplete(null)
-            }
+        val uid = id ?: auth.currentUser?.uid
+        if(uid == null) {
+            onComplete(null)
+            return
+        }
+        users.document(uid).get().addOnCompleteListener {
+            if(it.isSuccessful && it.result.data != null)
+                onComplete(documentToUserInfo(it.result))
             else
                 onComplete(null)
         }
@@ -111,23 +116,29 @@ class FBAuthorization: AuthInterface
         auth.currentUser?.sendEmailVerification()
     }
 
-    override fun isAuthenticated(user: User?): Boolean
+    override fun checkAuthenticated(user: User, onComplete: (Boolean) -> Unit)
     {
-        return auth.currentUser?.isEmailVerified ?: false
-    }
-
-    override fun checkAuthenticated(user: User?, onSuccess: () -> Unit, onFailed: () -> Unit)
-    {
-        auth.currentUser?.reload()?.addOnCompleteListener {
-            if(it.isSuccessful) {
-                when(auth.currentUser?.isEmailVerified) {
-                    true -> onSuccess()
-                    else -> onFailed()
+        if(user.id == null) {
+            onComplete(false)
+            return
+        }
+        users.document(user.id!!).get().addOnCompleteListener {
+            if(it.isSuccessful && it.result.exists()) {
+                val isTestUser = it.result.getBoolean(User.KEY_TEST_USER) ?: false
+                if(isTestUser)
+                    onComplete(true)
+                else {
+                    auth.currentUser?.reload()?.addOnCompleteListener { res ->
+                        if(res.isSuccessful)
+                            onComplete(auth.currentUser?.isEmailVerified ?: false)
+                        else
+                            onComplete(false)
+                    } ?: onComplete(false)
                 }
             }
             else
-                onFailed()
-        } ?: onFailed()
+                onComplete(false)
+        }
     }
 
     override fun signUp(user: User, password: String, onSuccess: () -> Unit, onFailed: () -> Unit)
@@ -187,14 +198,22 @@ class FBAuthorization: AuthInterface
     {
         users.document(user.id!!).get().addOnCompleteListener {
             if(it.isSuccessful) {
-                it.result.let { doc ->
-                    val list = doc.get(User.KEY_PREVIEW_LIST) as List<*>
-                    val boardList = list.map { item ->
-                        val docRef = item as DocumentReference
-                        docRef.id
+                if(it.result.exists()) {
+                    val doc = it.result
+                    val prevList = doc.get(User.KEY_PREVIEW_LIST)
+                    if(prevList != null) {
+                        val list = prevList as List<*>
+                        val boardList = list.map { item ->
+                            val docRef = item as DocumentReference
+                            docRef.id
+                        }
+                        onSuccess(boardList)
                     }
-                    onSuccess(boardList)
+                    else
+                        onSuccess(ArrayList<String>())
                 }
+                else
+                    onSuccess(ArrayList<String>())
             }
             else {
                 onFailed()

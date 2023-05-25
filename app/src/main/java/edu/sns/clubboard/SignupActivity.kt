@@ -108,21 +108,21 @@ class SignupActivity : AppCompatActivity() {
                 mailHansung = "${mail}@hansung.ac.kr"
 
                 if(loginId?.length == 0)
-                    errorId = "Please enter ID"
+                    errorId = resources.getString(R.string.error_empty, resources.getString(R.string.text_id))
                 if(password?.length == 0)
-                    errorPassword = "Please enter Password"
+                    errorPassword = resources.getString(R.string.error_empty, resources.getString(R.string.text_pw))
                 else if(password!!.length < 6)
                     errorPassword = "Password must be 6 characters or more"
                 if(passwordCheck != password)
                     errorPasswordCheck = "Please check your Password"
                 if(mail?.length == 0)
-                    errorMail = "Please enter E-mail"
+                    errorMail = resources.getString(R.string.error_empty, resources.getString(R.string.text_mail))
 
                 CoroutineScope(Dispatchers.IO).launch {
                     if(!auth.isValidId(loginId!!))
-                        errorId = "Same ID is already exists"
+                        errorId = resources.getString(R.string.error_exists, resources.getString(R.string.text_id))
                     if(!auth.isValidMail(mailHansung!!))
-                        errorMail = "Same Mail is already exists"
+                        errorMail = resources.getString(R.string.error_exists, resources.getString(R.string.text_mail))
 
                     runOnUiThread {
                         if(checkError())
@@ -183,17 +183,17 @@ class SignupActivity : AppCompatActivity() {
                 phone = inputPhone.editText?.text.toString()
 
                 if(nickname?.length == 0)
-                    errorNickname = "Please enter Nickname"
+                    errorNickname = resources.getString(R.string.error_empty, resources.getString(R.string.text_nickname))
                 if(name?.length == 0)
-                    errorName = "Please enter Name"
+                    errorName = resources.getString(R.string.error_empty, resources.getString(R.string.text_name))
                 if(studentId?.length == 0)
-                    errorStudentId = "Please enter Student ID"
+                    errorStudentId = resources.getString(R.string.error_empty, resources.getString(R.string.text_student_id))
                 if(phone?.length == 0)
-                    errorPhone = "Please enter Phone Number"
+                    errorPhone = resources.getString(R.string.error_empty, resources.getString(R.string.text_phone))
 
                 CoroutineScope(Dispatchers.IO).launch {
                     if(!auth.isValidNickname(nickname!!))
-                        errorNickname = "Same Nickname is already exists"
+                        errorNickname = resources.getString(R.string.error_exists, resources.getString(R.string.text_nickname))
 
                     runOnUiThread {
                         if(checkError()) {

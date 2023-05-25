@@ -30,15 +30,16 @@ class AuthenticateActivity : AppCompatActivity() {
         }
 
         binding.authBtn.setOnClickListener {
-            auth.authenticate(null)
+            auth.authenticate(auth.getUserInfo())
         }
 
         binding.checkAuthBtn.setOnClickListener {
-            auth.checkAuthenticated(null, onSuccess = {
-                onSuccess()
-            }, onFailed = {
-                onFailed()
-            })
+            auth.checkAuthenticated(auth.getUserInfo()!!) {
+                if(it)
+                    onSuccess()
+                else
+                    onFailed()
+            }
         }
     }
 

@@ -34,14 +34,17 @@ class SplashActivity : AppCompatActivity() {
     private fun init()
     {
         if(auth.isLogined()) {
-            if(auth.isAuthenticated(null))
-                splash { moveToMainActivity() }
-            else {
-                auth.checkAuthenticated(null, onSuccess = {
-                    splash { moveToMainActivity() }
-                }, onFailed = {
-                    splash { moveToAuthenticateActivity() }
-                })
+            auth.getUserInfo(null) {
+                if(it == null)
+                    splash { moveToLoginActivity() }
+                else {
+                    auth.checkAuthenticated(it) { isAuthenticated ->
+                        if(isAuthenticated)
+                            splash { moveToMainActivity() }
+                        else
+                            splash { moveToAuthenticateActivity() }
+                    }
+                }
             }
         }
         else

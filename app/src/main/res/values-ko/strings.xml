@@ -18,5 +18,23 @@
     <string name="text_next">다음으로</string>
     <string name="text_previous">이전으로</string>
     <string name="text_submit">확인</string>
-    <string name="app_name" translatable="false">한성대 동아리</string>
+    <string name="app_name">한성대 동아리</string>
+    <string name="text_manage">관리</string>
+    <string name="text_write">글쓰기</string>
+    <string name="text_signin">로그인</string>
+    <string name="text_signup">회원가입</string>
+    <string name="text_search_idpw">ID/PW찾기</string>
+    <string name="error_empty">%s을(를) 입력하세요</string>
+    <string name="text_club_name">동아리 이름</string>
+    <string name="text_description">소개글</string>
+    <string name="error_exists">동일한 %s이(가) 이미 존재합니다</string>
+    <string name="text_join_request">가입 요청</string>
+    <string name="text_already_request">요청 처리중</string>
+    <string name="text_load_post">게시글 불러오는 중...</string>
+    <string name="text_send_request">가입 요청 전송중...</string>
+    <string name="error_post_not_found">해당 게시글을 찾을 수 없습니다</string>
+    <string name="error_no_permission_read_post">해당 게시글을 읽을 권한이 없습니다</string>
+    <string name="text_club_board">동아리 게시판</string>
+    <string name="text_empty_board">게시글이 없습니다</string>
+    <string name="error_no_permission_read_board">해당 게시판을 읽을 권한이 없습니다.</string>
 </resources>
