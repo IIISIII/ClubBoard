@@ -41,7 +41,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:singleLine="false"
-                android:text="멤버관리"
+                android:text="@string/text_manage_member"
                 android:textColor="@color/black"
                 android:textSize="20sp" />
         </LinearLayout>
@@ -75,7 +75,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:singleLine="false"
-                android:text="요청관리"
+                android:text="@string/text_manage_request"
                 android:textColor="@color/black"
                 android:textSize="20sp" />
         </LinearLayout>
@@ -109,7 +109,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:singleLine="false"
-                android:text="정보수정"
+                android:text="@string/text_modify"
                 android:textColor="@color/black"
                 android:textSize="20sp" />
         </LinearLayout>

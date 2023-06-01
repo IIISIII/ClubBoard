@@ -15,6 +15,7 @@ class ImageChooser
 
     private val onImageSelected: (uri: Uri) -> Unit
 
+
     constructor(context: AppCompatActivity, onImageSelected: (uri: Uri) -> Unit)
     {
         this.context = context
@@ -29,7 +30,7 @@ class ImageChooser
         }
     }
 
-    fun startActivity()
+    fun launch()
     {
         val intent = Intent()
         intent.type = "image/*"

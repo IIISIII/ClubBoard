@@ -26,6 +26,9 @@ class FBClub: ClubInterface
 
     private val boards = db.collection("boards")
 
+    private val fileManager = FBFileManager.getInstance()
+
+
     companion object {
         private var instance: FBClub? = null
 
@@ -45,11 +48,7 @@ class FBClub: ClubInterface
             }
 
             it.result.let { res ->
-                val id = res.id
-                val name = res.getString(Club.KEY_NAME)
-                val description = res.getString(Club.KEY_DESCRIPTION)
-                val imgPath = res.getString(Club.KEY_IMGPATH)
-                val club = Club(id, name!!, description, imgPath)
+                val club = FBConvertor.documentToClub(res)
 
                 boards.whereEqualTo(Board.KEY_PARENT, clubRef).orderBy(Board.KEY_ORDER, Query.Direction.ASCENDING).get().addOnCompleteListener { resB ->
                     if(!resB.isSuccessful) {
@@ -72,7 +71,7 @@ class FBClub: ClubInterface
         }
     }
 
-    override fun createClub(clubName: String, description: String, img: Bitmap?, user: User, onComplete: (Club) -> Unit, onFailed: () -> Unit)
+    override fun createClub(clubName: String, description: String, imgPath: String?, user: User, onComplete: (Club) -> Unit, onFailed: () -> Unit)
     {
         val clubRef = clubs.document()
         val userRef = users.document(user.id!!)
@@ -83,7 +82,7 @@ class FBClub: ClubInterface
             Club.KEY_ACTIVATE to false,
             Club.KEY_NAME to clubName,
             Club.KEY_DESCRIPTION to description,
-            Club.KEY_IMGPATH to null
+            Club.KEY_IMGPATH to imgPath
         )
 
         val relationMap = hashMapOf(
@@ -93,12 +92,13 @@ class FBClub: ClubInterface
         )
 
         val postMap = hashMapOf(
-            Post.KEY_TITLE to "${clubName} 모집",
+            Post.KEY_TITLE to "$clubName 모집",
             Post.KEY_TEXT to description,
             Post.KEY_AUTHOR to userRef,
             Post.KEY_DATE to Date(),
             Post.KEY_TARGET_CLUB to clubRef,
-            Post.KEY_TYPE to Post.TYPE_RECRUIT
+            Post.KEY_TYPE to Post.TYPE_RECRUIT,
+            Post.KEY_IMG to imgPath
         )
 
         db.runBatch {
@@ -107,7 +107,7 @@ class FBClub: ClubInterface
             it.set(postRef, postMap)
         }.addOnCompleteListener {
             if(it.isSuccessful)
-                onComplete(Club(clubRef.id, clubName, description, null, false))
+                onComplete(Club(clubRef.id, clubName, description, imgPath, false))
             else
                 onFailed()
         }
@@ -118,8 +118,6 @@ class FBClub: ClubInterface
         val clubRef = clubs.document(club.id)
         val boardRefNoti = boards.document()
         val boardRefFree = boards.document()
-
-        val batch = db.batch()
 
         val boardMapNoti = hashMapOf(
             Board.KEY_NAME to "공지사항",
@@ -134,11 +132,16 @@ class FBClub: ClubInterface
             Board.KEY_ORDER to 1L
         )
 
-        batch.update(clubRef, Club.KEY_ACTIVATE, true)
-        batch.set(boardRefNoti, boardMapNoti)
-        batch.set(boardRefFree, boardMapFree)
+        db.runTransaction {
+            val clubSnapshot = it.get(clubRef)
+            val isActivated = clubSnapshot.getBoolean(Club.KEY_ACTIVATE) ?: false
 
-        batch.commit().addOnCompleteListener {
+            if(!isActivated) {
+                it.update(clubRef, Club.KEY_ACTIVATE, true)
+                it.set(boardRefNoti, boardMapNoti)
+                it.set(boardRefFree, boardMapFree)
+            }
+        }.addOnCompleteListener {
             if(it.isSuccessful)
                 onSuccess()
             else
@@ -146,14 +149,28 @@ class FBClub: ClubInterface
         }
     }
 
-    override fun getClubMembers(club: Club, onComplete: (List<User>) -> Unit, onFailed: () -> Unit)
+    override fun getClubMembers(club: Club, onComplete: (List<Member>) -> Unit, onFailed: () -> Unit)
     {
         val clubRef = clubs.document(club.id)
+        val memberMap = HashMap<String?, Long?>()
 
         relations.whereEqualTo(User.KEY_RELATION_CLUB, clubRef).get().addOnCompleteListener {
             if(it.isSuccessful) {
-                it.result.documents.map { doc ->
-                    Log.i("membersIds", doc.getDocumentReference(User.KEY_RELATION_USER).toString())
+                val refs = it.result.documents.map { doc ->
+                    val uref = doc.getDocumentReference(User.KEY_RELATION_USER)
+                    val level = doc.getLong(User.KEY_RELATION_PERMISSION_LEVEL)
+                    memberMap[uref?.id] = level
+                    uref
+                }
+                users.whereIn(FieldPath.documentId(), refs).get().addOnCompleteListener { res ->
+                    if(res.isSuccessful) {
+                        val list = res.result.documents.map { doc ->
+                            Member(FBConvertor.documentToUser(doc), memberMap[doc.id])
+                        }
+                        onComplete(list as ArrayList<Member>)
+                    }
+                    else
+                        onFailed()
                 }
             }
             else
@@ -184,12 +201,7 @@ class FBClub: ClubInterface
             if(it.isSuccessful) {
                 val list = ArrayList<Club>()
                 for(item in it.result.documents) {
-                    val id = item.id
-                    val name = item.getString(Club.KEY_NAME)
-                    val description = item.getString(Club.KEY_DESCRIPTION)
-                    val imgPath = item.getString(Club.KEY_IMGPATH)
-                    val isActivated = item.getBoolean(Club.KEY_ACTIVATE) ?: false
-                    list.add(Club(id, name!!, description, imgPath, isActivated))
+                    list.add(FBConvertor.documentToClub(item))
 
                     lastDoc = item
                 }
@@ -210,17 +222,12 @@ class FBClub: ClubInterface
         relations.whereEqualTo(User.KEY_RELATION_USER, userRef).get().addOnCompleteListener {
             if(it.isSuccessful) {
                 val clubRefs = it.result.documents.map { doc ->
-                    doc.getDocumentReference(User.KEY_RELATION_CLUB)
+                    doc.getDocumentReference(User.KEY_RELATION_CLUB)?.id
                 }
-                clubs.whereIn(FieldPath.documentId(), clubRefs).orderBy(Club.KEY_NAME, Query.Direction.ASCENDING).get().addOnCompleteListener { res ->
+                clubs.whereIn(FieldPath.documentId(), clubRefs).get().addOnCompleteListener { res ->
                     if(res.isSuccessful) {
                         for(item in res.result.documents) {
-                            val id = item.id
-                            val name = item.getString(Club.KEY_NAME)
-                            val description = item.getString(Club.KEY_DESCRIPTION)
-                            val imgPath = item.getString(Club.KEY_IMGPATH)
-                            val isActivated = item.getBoolean(Club.KEY_ACTIVATE) ?: false
-                            clubList.add(Club(id, name!!, description, imgPath, isActivated))
+                            clubList.add(FBConvertor.documentToClub(item))
                         }
                     }
 
@@ -347,6 +354,50 @@ class FBClub: ClubInterface
             }
             else
                 onComplete(false)
+        }
+    }
+
+    override fun setUserPemissionLevel(clubId: String, user: User, master: User, permissionLevel: Long, onComplete: (Boolean) -> Unit)
+    {
+        val userRef = relations.document("${user.id}-${clubId}")
+        val masterRef = relations.document("${master.id}-${clubId}")
+
+        db.runTransaction {
+            val master = it.get(masterRef)
+            val userSnap = it.get(userRef)
+
+            if(master.data == null || userSnap.data == null) {
+                onComplete(false)
+                return@runTransaction
+            }
+
+            if(permissionLevel == User.PERMISSION_LEVEL_MASTER)
+                it.update(masterRef, User.KEY_RELATION_PERMISSION_LEVEL, User.PERMISSION_LEVEL_MEMBER)
+            it.update(userRef, User.KEY_RELATION_PERMISSION_LEVEL, permissionLevel)
+        }.addOnCompleteListener {
+            onComplete(it.isSuccessful)
+        }
+    }
+
+    override fun kick(clubId: String, user: User, onComplete: (Boolean) -> Unit)
+    {
+        val userRef = relations.document("${user.id}-${clubId}")
+
+        userRef.delete().addOnCompleteListener {
+            onComplete(it.isSuccessful)
+        }
+    }
+
+    override fun modifyClubInfo(club: Club, description: String, imgPath: String?, onComplete: (Boolean) -> Unit)
+    {
+        val clubRef = clubs.document(club.id)
+
+        db.runBatch {
+            it.update(clubRef, Club.KEY_DESCRIPTION, description)
+            if(imgPath != null)
+                it.update(clubRef, Club.KEY_IMGPATH, imgPath)
+        }.addOnCompleteListener {
+            onComplete(it.isSuccessful)
         }
     }
 

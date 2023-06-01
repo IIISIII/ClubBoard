@@ -9,7 +9,7 @@ import android.view.View
 import android.widget.Toast
 import edu.sns.clubboard.adapter.FBAuthorization
 import edu.sns.clubboard.adapter.FBBoard
-import edu.sns.clubboard.data.Board
+import edu.sns.clubboard.data.Post
 import edu.sns.clubboard.databinding.ActivityMainBinding
 import edu.sns.clubboard.port.AuthInterface
 import edu.sns.clubboard.port.BoardInterface
@@ -22,9 +22,18 @@ class MainActivity : AppCompatActivity() {
 
     private val auth : AuthInterface = FBAuthorization.getInstance()
 
-    private val boardInterface: BoardInterface = FBBoard()
+    private val freeBoardInterface = FBBoard()
 
-    private lateinit var adapter: PreviewAdapter
+    private val recruitBoardInterface = FBBoard()
+
+    private val freeBoardId = "0"
+
+    private val recruitBoardId = "1"
+
+    private var freeAdapter: PreviewAdapter? = null
+
+    private var recruitAdapter: PreviewAdapter? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?)
     {
@@ -33,13 +42,13 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
 
-        if(!auth.isLogined())
+        if(!auth.isLogin())
             moveToLoginActivity()
         else {
             auth.getUserInfo(null) {
                 if(it != null) {
-                    auth.checkAuthenticated(it) {
-                        if (!it)
+                    auth.checkAuthenticated(it) { isAuthenticated ->
+                        if (!isAuthenticated)
                             moveToAuthenticateActivity()
                         else
                             init()
@@ -60,11 +69,12 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean
     {
         return when(item.itemId) {
-            R.id.noti -> {
-
-                true
-            }
             R.id.profile -> {
+                val user = auth.getUserInfo()!!
+
+                val intent = Intent(this, UserProfileActivity::class.java)
+                intent.putExtra(UserProfileActivity.USER_ID, user.id)
+                startActivity(intent)
 
                 true
             }
@@ -79,51 +89,33 @@ class MainActivity : AppCompatActivity() {
         FBAuthorization.remove()
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        previewInit()
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        previewPause()
+    }
+
     private fun init()
     {
-        adapter = PreviewAdapter()
-        adapter.setOnLoadingStart {
-            mainLoadingStart()
-        }
-        adapter.setOnLoadingEnd { havePermission, post, board ->
-            if(havePermission) {
-                val intent = Intent(this, PostActivity::class.java)
-                intent.putExtra("target_club", post!!.targetClubId)
-                intent.putExtra("board_name", board!!.name)
-                intent.putExtra("board_id", board.id)
-                intent.putExtra("post_id", post.id)
-                startActivity(intent)
-            }
-            else {
-                //error dialog have no permission
-            }
-            mainLoadingEnd()
-        }
-        binding.previewList.adapter = adapter
-
-        auth.getPreviewList(auth.getUserInfo()!!, onSuccess = {
-            boardInterface.getBoardListByIdList(it, onSuccess = { boards ->
-                adapter.setList(boards as ArrayList<Board>)
-                loadingEnd()
-            }, onFailed = {
-                loadingEnd()
-            })
-        }, onFailed = {
-            loadingEnd()
-        })
-
         binding.searchClub.setOnClickListener {
             val intent = Intent(this, ClubListActivity::class.java)
             startActivity(intent)
         }
 
         binding.myClubBtn.setOnClickListener {
-
+            val intent = Intent(this, MyClubActivity::class.java)
+            startActivity(intent)
         }
 
         binding.promoteBtn.setOnClickListener {
             val intent = Intent(this, BoardActivity::class.java)
-            intent.putExtra("board_id", "1")
+            intent.putExtra("board_id", recruitBoardId)
             startActivity(intent)
         }
 
@@ -134,29 +126,80 @@ class MainActivity : AppCompatActivity() {
 
         binding.freeBoardBtn.setOnClickListener {
             val intent = Intent(this, BoardActivity::class.java)
-            intent.putExtra("board_id", "0")
+            intent.putExtra("board_id", freeBoardId)
             startActivity(intent)
         }
     }
 
-    private fun loadingStart()
+    private fun previewInit()
     {
-        binding.previewProgressBackground.visibility = View.VISIBLE
+        freeBoardInterface.getBoardData(freeBoardId, onSuccess = {
+            binding.previewBox1Title.text = it.name
+
+            if(freeAdapter == null) {
+                freeAdapter = PreviewAdapter(it)
+                binding.previewBox1List.apply {
+                    adapter = freeAdapter
+                }
+                freeAdapter?.setOnItemClick { post, board ->
+                    val intent = Intent(this, PostActivity::class.java)
+                    intent.putExtra("target_club", post.targetClubId)
+                    intent.putExtra("board_name", board.name)
+                    intent.putExtra("board_id", board.id)
+                    intent.putExtra("post_id", post.id)
+                    startActivity(intent)
+                }
+            }
+
+            freeBoardInterface.registerBoardPreview(freeBoardId, 5) { list ->
+                binding.loadingBackground.visibility = View.GONE
+                binding.previewList1.visibility = View.VISIBLE
+
+                freeAdapter?.setPostList(list as ArrayList<Post>)
+
+                binding.previewBox1Empty.visibility = if(list.isEmpty())
+                        View.VISIBLE
+                    else
+                        View.GONE
+            }
+        }, onFailed = {})
+
+        recruitBoardInterface.getBoardData(recruitBoardId, onSuccess = {
+            binding.previewBox2Title.text = it.name
+
+            if(recruitAdapter == null) {
+                recruitAdapter = PreviewAdapter(it)
+                binding.previewBox2List.apply {
+                    adapter = recruitAdapter
+                }
+                recruitAdapter?.setOnItemClick { post, board ->
+                    val intent = Intent(this, PostActivity::class.java)
+                    intent.putExtra("target_club", post.targetClubId)
+                    intent.putExtra("board_name", board.name)
+                    intent.putExtra("board_id", board.id)
+                    intent.putExtra("post_id", post.id)
+                    startActivity(intent)
+                }
+            }
+
+            recruitBoardInterface.registerBoardPreview(recruitBoardId, 5) { list ->
+                binding.loadingBackground.visibility = View.GONE
+                binding.previewList2.visibility = View.VISIBLE
+
+                recruitAdapter?.setPostList(list as ArrayList<Post>)
+
+                binding.previewBox2Empty.visibility = if(list.isEmpty())
+                    View.VISIBLE
+                else
+                    View.GONE
+            }
+        }, onFailed = {})
     }
 
-    private fun loadingEnd()
+    private fun previewPause()
     {
-        binding.previewProgressBackground.visibility = View.GONE
-    }
-
-    private fun mainLoadingStart()
-    {
-        binding.mainLoadingBackground.visibility = View.VISIBLE
-    }
-
-    private fun mainLoadingEnd()
-    {
-        binding.mainLoadingBackground.visibility = View.GONE
+        freeBoardInterface.unregisterBoardPreview()
+        recruitBoardInterface.unregisterBoardPreview()
     }
 
     private fun moveToLoginActivity()

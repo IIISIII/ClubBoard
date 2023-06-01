@@ -22,9 +22,12 @@ class FBAuthorization: AuthInterface
 
     private val users = db.collection("users")
 
+    private val relations = db.collection("relations")
+
     private var userInfo: User? = null
 
     private var userRegistration: ListenerRegistration? = null
+
 
     companion object {
         private var instance: FBAuthorization? = null
@@ -47,7 +50,7 @@ class FBAuthorization: AuthInterface
                     users.document(ur.uid).get().addOnCompleteListener { res ->
                         if(res.isSuccessful && res.result.exists()) {
                             res.result.run {
-                                userInfo = documentToUserInfo(this)
+                                userInfo = FBConvertor.documentToUser(this)
                                 onComplete(userInfo)
                                 register(ur.uid)
                             }
@@ -69,11 +72,8 @@ class FBAuthorization: AuthInterface
             if(it.isSuccessful) {
                 val doc = it.result.documents.firstOrNull()
                 doc?.run {
-                    userInfo = documentToUserInfo(this)
-                    if(userInfo == null) {
-                        onFailed()
-                        return@addOnCompleteListener
-                    }
+                    userInfo = FBConvertor.documentToUser(this)
+
                     auth.signInWithEmailAndPassword(userInfo?.email.toString(), pw).addOnCompleteListener { res ->
                         if (res.isSuccessful) {
                             onSuccess(userInfo!!)
@@ -93,6 +93,76 @@ class FBAuthorization: AuthInterface
         }
     }
 
+    override fun logout(onComplete: () -> Unit)
+    {
+        auth.signOut()
+        unregister()
+        onComplete()
+    }
+
+    override fun updateProfile(userId: String, nickname: String, phone: String, imgPath: String?, onComplete: (Boolean) -> Unit)
+    {
+        val updateMap = if(imgPath == null)
+            mapOf(
+                User.KEY_NICKNAME to nickname,
+                User.KEY_PHONE to phone
+            )
+        else
+            mapOf(
+                User.KEY_NICKNAME to nickname,
+                User.KEY_PHONE to phone,
+                User.KEY_PROFILE_IMG to imgPath
+            )
+
+        users.document(userId).update(updateMap).addOnCompleteListener {
+            onComplete(it.isSuccessful)
+        }
+    }
+
+    override fun deleteAccount(userId: String, onComplete: (Int) -> Unit)
+    {
+        val userRef = users.document(userId)
+
+        val userRelations = relations
+            .whereEqualTo(User.KEY_RELATION_USER, userRef)
+
+        val count = userRelations
+            .whereEqualTo(User.KEY_RELATION_PERMISSION_LEVEL, User.PERMISSION_LEVEL_MASTER)
+            .count()
+
+        val batch = db.batch()
+
+        count.get(AggregateSource.SERVER).addOnCompleteListener {
+            if(it.isSuccessful) {
+                if(it.result.count > 0)
+                    onComplete(User.ERROR_DELETE_ACCOUNT_MASTER)
+                else {
+                    userRelations.get().addOnCompleteListener { res ->
+                        if(res.isSuccessful) {
+                            res.result.documents.forEach { snapshot ->
+                                batch.delete(snapshot.reference)
+                            }
+                            batch.delete(userRef)
+
+                            batch.commit().addOnCompleteListener { batchRes ->
+                                auth.currentUser?.delete()?.addOnCompleteListener {
+                                    if(batchRes.isSuccessful)
+                                        onComplete(User.SUCCESS_DELETE_ACCOUNT)
+                                    else
+                                        onComplete(User.ERROR_DELETE_ACCOUNT)
+                                } ?: onComplete(User.ERROR_DELETE_ACCOUNT)
+                            }
+                        }
+                        else
+                            onComplete(User.ERROR_DELETE_ACCOUNT)
+                    }
+                }
+            }
+            else
+                onComplete(User.ERROR_DELETE_ACCOUNT)
+        }
+    }
+
     override fun getUserInfo(): User? = userInfo
 
     override fun getUserInfo(id: String?, onComplete: (User?) -> Unit)
@@ -104,16 +174,18 @@ class FBAuthorization: AuthInterface
         }
         users.document(uid).get().addOnCompleteListener {
             if(it.isSuccessful && it.result.data != null)
-                onComplete(documentToUserInfo(it.result))
+                onComplete(FBConvertor.documentToUser(it.result))
             else
                 onComplete(null)
         }
     }
 
-    override fun authenticate(user: User?)
+    override fun authenticate(user: User?, onComplete: (Boolean) -> Unit)
     {
         //need to reload
-        auth.currentUser?.sendEmailVerification()
+        auth.currentUser?.sendEmailVerification()?.addOnCompleteListener {
+            onComplete(it.isSuccessful)
+        } ?: onComplete(false)
     }
 
     override fun checkAuthenticated(user: User, onComplete: (Boolean) -> Unit)
@@ -165,7 +237,7 @@ class FBAuthorization: AuthInterface
         }
     }
 
-    override fun isLogined(): Boolean
+    override fun isLogin(): Boolean
     {
         return when(auth.currentUser) {
             null -> false
@@ -194,52 +266,6 @@ class FBAuthorization: AuthInterface
         return result.count == 0L
     }
 
-    override fun getPreviewList(user: User, onSuccess: (boardList: List<String>) -> Unit, onFailed: () -> Unit)
-    {
-        users.document(user.id!!).get().addOnCompleteListener {
-            if(it.isSuccessful) {
-                if(it.result.exists()) {
-                    val doc = it.result
-                    val prevList = doc.get(User.KEY_PREVIEW_LIST)
-                    if(prevList != null) {
-                        val list = prevList as List<*>
-                        val boardList = list.map { item ->
-                            val docRef = item as DocumentReference
-                            docRef.id
-                        }
-                        onSuccess(boardList)
-                    }
-                    else
-                        onSuccess(ArrayList<String>())
-                }
-                else
-                    onSuccess(ArrayList<String>())
-            }
-            else {
-                onFailed()
-            }
-        }
-    }
-
-    private fun documentToUserInfo(document: DocumentSnapshot): User?
-    {
-        return try {
-            val email = document.getString(User.KEY_EMAIL)
-            val studentId = document.getString(User.KEY_STUDENTID)
-            val name = document.getString(User.KEY_NAME)
-            val nickname = document.getString(User.KEY_NICKNAME)
-            val phone = document.getString(User.KEY_PHONE)
-            val loginId = document.getString(User.KEY_LOGINID)
-            val profileImg = document.getString(User.KEY_PROFILE_IMG)
-
-            val admin = document.getBoolean(User.KEY_ADMIN) ?: false
-
-            User(document.id, studentId!!, name!!, phone!!, email!!, nickname!!, loginId!!, profileImg, admin)
-        } catch (err: Exception) {
-            null
-        }
-    }
-
     private fun register(id: String)
     {
         userRegistration?.remove()
@@ -250,7 +276,11 @@ class FBAuthorization: AuthInterface
             }
 
             value?.run {
-                userInfo = documentToUserInfo(this)
+                try {
+                    userInfo = FBConvertor.documentToUser(this)
+                } catch (_: Exception) {
+                    userInfo = null
+                }
             }
         }
     }

@@ -13,5 +13,5 @@
     <color name="dark_blue">#001F99</color>
     <color name="grey">#404040</color>
     <color name="red">#FF0000</color>
-    <color name="loading_color">#99C8C8C8</color>
+    <color name="loading_color">#33eeeeee</color>
 </resources>

@@ -6,11 +6,14 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
@@ -19,6 +22,7 @@ import com.google.android.material.tabs.TabLayoutMediator
 import edu.sns.clubboard.adapter.FBAuthorization
 import edu.sns.clubboard.adapter.FBBoard
 import edu.sns.clubboard.adapter.FBClub
+import edu.sns.clubboard.adapter.FBFileManager
 import edu.sns.clubboard.data.Board
 import edu.sns.clubboard.data.Club
 import edu.sns.clubboard.data.Post
@@ -27,9 +31,7 @@ import edu.sns.clubboard.databinding.ActivityClubBinding
 import edu.sns.clubboard.port.AuthInterface
 import edu.sns.clubboard.port.BoardInterface
 import edu.sns.clubboard.port.ClubInterface
-import edu.sns.clubboard.ui.InfiniteScrollListener
-import edu.sns.clubboard.ui.ManageDialog
-import edu.sns.clubboard.ui.PostAdapter
+import edu.sns.clubboard.ui.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -44,37 +46,75 @@ class ClubActivity : AppCompatActivity()
 
     private val auth: AuthInterface = FBAuthorization.getInstance()
 
+    private val fileManager = FBFileManager.getInstance()
+
+    private var loadingDialog = LoadingDialog()
+
+    private var clubId: String? = null
+
     private lateinit var viewPager: ViewPager2
     private lateinit var tabLayout: TabLayout
 
+    private lateinit var launcher: ActivityResultLauncher<Intent>
+
     private var permissionLevel: Long? = null
+
+    private var isClubDataChanged = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
         setSupportActionBar(binding.clubToolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
-        loadingStart()
 
         binding.clubTitle.isSelected = true
 
         viewPager = binding.boardViewPager
         tabLayout = binding.boardTab
 
-        intent.getStringExtra("club_id")?.let {
-            clubInterface.getClubData(it, onComplete = { club, boardList ->
-                init(club, boardList)
-            }, onFailed = {
-                finish()
-            })
+        launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            if(it.resultCode == RESULT_OK) {
+                isClubDataChanged = true
+                init(clubId!!)
+            }
         }
+
+        clubId = intent.getStringExtra("club_id")
+
+        clubId?.let {
+            init(it)
+        } ?: finish()
     }
 
-    private fun init(club: Club, boardList: List<Board>)
+    override fun finish()
+    {
+        if(isClubDataChanged)
+            setResult(RESULT_OK)
+        super.finish()
+    }
+
+    private fun init(clubId: String)
+    {
+        loadingStart()
+        clubInterface.getClubData(clubId, onComplete = { club, boardList ->
+            initData(club, boardList)
+        }, onFailed = {
+            finish()
+        })
+    }
+
+    private fun initData(club: Club, boardList: List<Board>)
     {
         binding.clubTitle.text = club.name
+
+        club.imgPath?.let {
+            fileManager.getImage(it) { img ->
+                if(img != null)
+                    binding.clubImg.setImageBitmap(img)
+                else
+                    binding.clubImg.setImageResource(R.mipmap.empty_club_logo)
+            }
+        }
 
         val user = auth.getUserInfo()!!
 
@@ -82,6 +122,10 @@ class ClubActivity : AppCompatActivity()
         manageDialog.setOnMenuItemClickListener(object: ManageDialog.OnMenuButtonClickListener {
             override fun onFirstItemClick(manageDialog: ManageDialog)
             {
+                val intent = Intent(this@ClubActivity, ManageMemberActivity::class.java)
+                intent.putExtra("club_id", club.id)
+                launcher.launch(intent)
+
                 manageDialog.dismiss()
             }
 
@@ -96,6 +140,10 @@ class ClubActivity : AppCompatActivity()
 
             override fun onThirdItemClick(manageDialog: ManageDialog)
             {
+                val intent = Intent(this@ClubActivity, ClubProfileActivity::class.java)
+                intent.putExtra("club_id", club.id)
+                launcher.launch(intent)
+
                 manageDialog.dismiss()
             }
         })
@@ -114,11 +162,13 @@ class ClubActivity : AppCompatActivity()
                     finish()
                     return@runOnUiThread
                 }
+                else
+                    binding.manageBtn.visibility = View.GONE
                 loadingEnd()
             }
         }
 
-        viewPager.adapter = ViewPagerAdapter(supportFragmentManager, lifecycle, user, club, boardList)
+        viewPager.adapter = ViewPagerAdapter(this, supportFragmentManager, lifecycle, user, club, boardList)
 
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             val board = boardList[position]
@@ -129,16 +179,16 @@ class ClubActivity : AppCompatActivity()
     private fun loadingStart()
     {
         binding.mainLayout.visibility = View.GONE
-        binding.loadingBackground.visibility = View.VISIBLE
+        loadingDialog.show(supportFragmentManager, "LoadingDialog")
     }
 
     private fun loadingEnd()
     {
         binding.mainLayout.visibility = View.VISIBLE
-        binding.loadingBackground.visibility = View.GONE
+        loadingDialog.dismiss()
     }
 
-    class ViewPagerAdapter(fragmentManager: FragmentManager, lifecycle: Lifecycle, val user: User, val club: Club, val list: List<Board>): FragmentStateAdapter(fragmentManager, lifecycle)
+    class ViewPagerAdapter(val activity: AppCompatActivity, fragmentManager: FragmentManager, lifecycle: Lifecycle, val user: User, val club: Club, val list: List<Board>): FragmentStateAdapter(fragmentManager, lifecycle)
     {
         override fun getItemCount(): Int
         {
@@ -147,10 +197,10 @@ class ClubActivity : AppCompatActivity()
 
         override fun createFragment(position: Int): Fragment
         {
-            return TabFragment(user, club, list[position])
+            return TabFragment(activity, user, club, list[position])
         }
 
-        class TabFragment(val user: User, val club: Club, private val board: Board): Fragment(R.layout.board_fragment)
+        class TabFragment(val activity: AppCompatActivity, val user: User, val club: Club, private val board: Board): Fragment(R.layout.board_fragment)
         {
             private val pageItemCount = 10L
 
@@ -165,6 +215,9 @@ class ClubActivity : AppCompatActivity()
             private var alreadyInit = false
 
             private var cantReadMore = false
+
+            private lateinit var resultLauncher: ActivityResultLauncher<Intent>
+
 
             override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
                 super.onViewCreated(view, savedInstanceState)
@@ -182,9 +235,9 @@ class ClubActivity : AppCompatActivity()
                     startActivity(intent)
                 }
                 postAdapter.setOnItemLongClick { post, board ->
-
+                    checkAndShowManageDialog(post, board)
                 }
-                postList.adapter = postAdapter
+
 
                 val infiniteScrollListener = InfiniteScrollListener()
                 infiniteScrollListener.setItemSizeGettr {
@@ -196,19 +249,18 @@ class ClubActivity : AppCompatActivity()
                     boardInterface.getPostListLimited(board, false, pageItemCount, onComplete = { list, cantReadMore ->
                         this.cantReadMore = cantReadMore
                         postAdapter.addPostList(list as ArrayList<Post>)
-                        infiniteScrollListener.loadingEnd()
                     })
                 }
 
-                postList.addOnScrollListener(infiniteScrollListener)
+                postList.apply {
+                    adapter = postAdapter
+                    addOnScrollListener(infiniteScrollListener)
+                    addItemDecoration(DividerItemDecoration(context, LinearLayout.VERTICAL))
+                }
 
-                val resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { activityResult ->
-                    if (activityResult.resultCode == Activity.RESULT_OK) {
-                        boardInterface.getPostListLimited(board, true, pageItemCount, onComplete = { list, cantReadMore ->
-                            this.cantReadMore = cantReadMore
-                            init(list)
-                        })
-                    }
+                resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { activityResult ->
+                    if (activityResult.resultCode == Activity.RESULT_OK)
+                        init(board)
                 }
 
                 writeBtn.setOnClickListener {
@@ -217,23 +269,33 @@ class ClubActivity : AppCompatActivity()
                     resultLauncher.launch(intent)
                 }
 
-                boardInterface.getPostListLimited(board, true, pageItemCount, onComplete = { list, cantReadMore ->
-                    this.cantReadMore = cantReadMore
-                    init(list)
-                })
+                init(board)
             }
 
-            private fun init(list: List<Post>)
+            private fun init(board: Board)
             {
                 postList.scrollToPosition(0)
 
-                postAdapter.setPostList(list as ArrayList<Post>)
+                boardInterface.getPostListLimited(board, true, pageItemCount, onComplete = { list, cantReadMore ->
+                    this.cantReadMore = cantReadMore
 
-                boardInterface.checkWritePermission(user, board, onComplete = {
-                    writeBtn.visibility = if(it) View.VISIBLE else View.GONE
+                    postAdapter.setPostList(list as ArrayList<Post>)
+
+                    boardInterface.checkWritePermission(user, board) {
+                        writeBtn.visibility = if(it) View.VISIBLE else View.GONE
+                    }
+
+                    alreadyInit = true
                 })
+            }
 
-                alreadyInit = true
+            private fun checkAndShowManageDialog(post: Post, board: Board)
+            {
+                val managePostDialog = ManagePostDialog(activity, user, board, post)
+
+                managePostDialog.show(activity, resultLauncher) {
+                    init(board)
+                }
             }
         }
     }

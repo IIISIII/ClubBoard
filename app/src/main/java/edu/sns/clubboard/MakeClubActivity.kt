@@ -1,5 +1,7 @@
 package edu.sns.clubboard
 
+import android.graphics.BitmapFactory
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -8,8 +10,12 @@ import android.view.View
 import android.widget.Toast
 import edu.sns.clubboard.adapter.FBAuthorization
 import edu.sns.clubboard.adapter.FBClub
+import edu.sns.clubboard.adapter.FBFileManager
 import edu.sns.clubboard.chooser.ImageChooser
+import edu.sns.clubboard.data.PathMaker
+import edu.sns.clubboard.data.User
 import edu.sns.clubboard.databinding.ActivityMakeClubBinding
+import edu.sns.clubboard.ui.LoadingDialog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,7 +30,14 @@ class MakeClubActivity : AppCompatActivity()
 
     private val clubInterface = FBClub.getInstance()
 
+    private val fileManager = FBFileManager.getInstance()
+
+    private val loadingDialog = LoadingDialog()
+
     private var imageChooser: ImageChooser? = null
+
+    private var selectedUri: Uri? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?)
     {
@@ -35,11 +48,14 @@ class MakeClubActivity : AppCompatActivity()
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         imageChooser = ImageChooser(this) {
-            Toast.makeText(this, "${it}", Toast.LENGTH_SHORT).show()
+            selectedUri = it
+            val bitmap = fileManager.getImageFromUri(this, it)
+            if(bitmap != null)
+                binding.clubImg.setImageBitmap(bitmap)
         }
 
         binding.clubImg.setOnClickListener {
-            imageChooser?.startActivity()
+            imageChooser?.launch()
         }
 
         binding.submitBtn.setOnClickListener {
@@ -48,7 +64,7 @@ class MakeClubActivity : AppCompatActivity()
             val clubName = binding.inputTitle.editText?.text.toString().trim()
             val description = binding.inputDescription.editText?.text.toString()
 
-            val user = auth.getUserInfo()
+            val user = auth.getUserInfo()!!
 
             if(clubName.isEmpty()) {
                 binding.inputTitle.isErrorEnabled = true
@@ -57,41 +73,54 @@ class MakeClubActivity : AppCompatActivity()
                 return@setOnClickListener
             }
 
-            CoroutineScope(Dispatchers.IO).launch {
-                val isValidName = clubInterface.isValidName(clubName)
-                runOnUiThread {
-                    if(!isValidName) {
-                        binding.inputTitle.isErrorEnabled = true
-                        binding.inputTitle.error = resources.getString(R.string.error_exists, resources.getString(R.string.text_club_name))
+            if(selectedUri != null) {
+                fileManager.uploadFile(this, selectedUri!!, PathMaker.makeWithClub(clubName)) {
+                    if(it == null) {
                         loadingEnd()
+                        return@uploadFile
                     }
-                    else {
-                        clubInterface.createClub(clubName, description, null, user!!, onComplete = {
-                            finish()
-                        }, onFailed = {
-                            loadingEnd()
-                        })
-                    }
+                    createClub(clubName, description, it, user)
                 }
             }
-
+            else
+                createClub(clubName, description, null, user)
         }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when(item.itemId) {
-            android.R.id.home -> finish()
-        }
+        if(item.itemId == android.R.id.home)
+            finish()
         return super.onOptionsItemSelected(item)
     }
 
     private fun loadingStart()
     {
-        binding.loadingBackground.visibility = View.VISIBLE
+        loadingDialog.show(supportFragmentManager, "LoadingDialog")
     }
 
     private fun loadingEnd()
     {
-        binding.loadingBackground.visibility = View.GONE
+        loadingDialog.dismiss()
+    }
+
+    private fun createClub(clubName: String, description: String, imgPath: String?, master: User)
+    {
+        CoroutineScope(Dispatchers.IO).launch {
+            val isValidName = clubInterface.isValidName(clubName)
+            runOnUiThread {
+                if(!isValidName) {
+                    binding.inputTitle.isErrorEnabled = true
+                    binding.inputTitle.error = resources.getString(R.string.error_exists, resources.getString(R.string.text_club_name))
+                    loadingEnd()
+                }
+                else {
+                    clubInterface.createClub(clubName, description, imgPath, master, onComplete = {
+                        finish()
+                    }, onFailed = {
+                        loadingEnd()
+                    })
+                }
+            }
+        }
     }
 }

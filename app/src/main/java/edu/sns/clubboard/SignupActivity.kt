@@ -6,19 +6,22 @@ import android.os.Bundle
 import android.transition.Fade
 import android.transition.Scene
 import android.transition.TransitionManager
+import android.view.MenuItem
 import android.view.View
 import android.widget.Button
-import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import com.google.android.material.textfield.TextInputLayout
 import edu.sns.clubboard.adapter.FBAuthorization
 import edu.sns.clubboard.data.User
 import edu.sns.clubboard.databinding.ActivitySignupBinding
+import edu.sns.clubboard.listener.SpaceBlockingTextWatcher
 import edu.sns.clubboard.port.AuthInterface
+import edu.sns.clubboard.ui.LoadingDialog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import java.util.regex.Pattern
 
 class SignupActivity : AppCompatActivity() {
 
@@ -27,6 +30,8 @@ class SignupActivity : AppCompatActivity() {
     }
 
     private val auth: AuthInterface = FBAuthorization.getInstance()
+
+    private val loadingDialog = LoadingDialog()
 
     private var loginId: String? = null
     private var password: String? = null
@@ -64,6 +69,12 @@ class SignupActivity : AppCompatActivity() {
         goToScene(0)
     }
 
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if(item.itemId == android.R.id.home)
+            finish()
+        return super.onOptionsItemSelected(item)
+    }
+
     private fun init(flag: Int)
     {
         if(flag == 0) {
@@ -71,7 +82,21 @@ class SignupActivity : AppCompatActivity() {
             val inputPassword = binding.sceneRoot.findViewById<TextInputLayout>(R.id.input_pw)
             val inputPasswordCheck = binding.sceneRoot.findViewById<TextInputLayout>(R.id.input_pw_check)
             val inputMail = binding.sceneRoot.findViewById<TextInputLayout>(R.id.input_mail)
+            val textPasswordPattern = binding.sceneRoot.findViewById<TextView>(R.id.text_password_pattern)
             val nextBtn = binding.sceneRoot.findViewById<Button>(R.id.btn_next)
+
+            inputId.editText?.apply {
+                addTextChangedListener(SpaceBlockingTextWatcher(this))
+            }
+            inputPassword.editText?.apply {
+                addTextChangedListener(SpaceBlockingTextWatcher(this))
+            }
+            inputPasswordCheck.editText?.apply {
+                addTextChangedListener(SpaceBlockingTextWatcher(this))
+            }
+            inputMail.editText?.apply {
+                addTextChangedListener(SpaceBlockingTextWatcher(this))
+            }
 
             inputId.editText?.setText(loginId ?: "")
             inputPassword.editText?.setText(password ?: "")
@@ -87,6 +112,11 @@ class SignupActivity : AppCompatActivity() {
                 var errorMail: String? = null
 
                 fun checkError(): Boolean {
+                    textPasswordPattern.visibility = if(errorPassword != null)
+                            View.INVISIBLE
+                        else
+                            View.VISIBLE
+
                     if(errorId != null || errorPassword != null || errorPasswordCheck != null || errorMail != null) {
                         inputId.isErrorEnabled = errorId != null
                         inputId.error = errorId
@@ -112,9 +142,9 @@ class SignupActivity : AppCompatActivity() {
                 if(password?.length == 0)
                     errorPassword = resources.getString(R.string.error_empty, resources.getString(R.string.text_pw))
                 else if(password!!.length < 6)
-                    errorPassword = "Password must be 6 characters or more"
+                    errorPassword = resources.getString(R.string.error_password_length)
                 if(passwordCheck != password)
-                    errorPasswordCheck = "Please check your Password"
+                    errorPasswordCheck = resources.getString(R.string.error_password_check)
                 if(mail?.length == 0)
                     errorMail = resources.getString(R.string.error_empty, resources.getString(R.string.text_mail))
 
@@ -133,13 +163,27 @@ class SignupActivity : AppCompatActivity() {
             }
         }
         else if(flag == 1) {
-            val inputImg = binding.sceneRoot.findViewById<ImageView>(R.id.img_profile)
             val inputNickname = binding.sceneRoot.findViewById<TextInputLayout>(R.id.input_nickname)
             val inputName = binding.sceneRoot.findViewById<TextInputLayout>(R.id.input_name)
             val inputStudentId = binding.sceneRoot.findViewById<TextInputLayout>(R.id.input_student_id)
             val inputPhone = binding.sceneRoot.findViewById<TextInputLayout>(R.id.input_phone)
             val previousBtn = binding.sceneRoot.findViewById<Button>(R.id.btn_previous)
             val submitBtn = binding.sceneRoot.findViewById<Button>(R.id.btn_submit)
+
+            inputNickname.editText?.apply {
+                addTextChangedListener(SpaceBlockingTextWatcher(this))
+            }
+            inputName.editText?.apply {
+                addTextChangedListener(SpaceBlockingTextWatcher(this))
+            }
+            inputStudentId.editText?.apply {
+                addTextChangedListener(SpaceBlockingTextWatcher(this))
+            }
+            inputPhone.editText?.apply {
+                addTextChangedListener(SpaceBlockingTextWatcher(this))
+            }
+
+            val pattern = Pattern.compile("^01(?:0|1|[6-9])-(?:\\d{3}|\\d{4})-\\d{4}$")
 
             inputNickname.editText?.setText(nickname ?: "")
             inputName.editText?.setText(name ?: "")
@@ -188,8 +232,8 @@ class SignupActivity : AppCompatActivity() {
                     errorName = resources.getString(R.string.error_empty, resources.getString(R.string.text_name))
                 if(studentId?.length == 0)
                     errorStudentId = resources.getString(R.string.error_empty, resources.getString(R.string.text_student_id))
-                if(phone?.length == 0)
-                    errorPhone = resources.getString(R.string.error_empty, resources.getString(R.string.text_phone))
+                if(!pattern.matcher(phone).matches())
+                    errorPhone = resources.getString(R.string.error_pattern_mismatch, resources.getString(R.string.text_phone))
 
                 CoroutineScope(Dispatchers.IO).launch {
                     if(!auth.isValidNickname(nickname!!))
@@ -206,6 +250,8 @@ class SignupActivity : AppCompatActivity() {
                                 loadingEnd()
                             })
                         }
+                        else
+                            loadingEnd()
                     }
                 }
             }
@@ -224,12 +270,12 @@ class SignupActivity : AppCompatActivity() {
 
     private fun loadingStart()
     {
-        binding.progressBackground.visibility = View.VISIBLE
+        loadingDialog.show(supportFragmentManager, "LoadingDialog")
     }
 
     private fun loadingEnd()
     {
-        binding.progressBackground.visibility = View.GONE
+        loadingDialog.dismiss()
     }
 
     private fun onSuccess()

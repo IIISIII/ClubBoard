@@ -3,10 +3,14 @@ package edu.sns.clubboard
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import android.widget.LinearLayout
+import android.widget.Toast
+import androidx.recyclerview.widget.DividerItemDecoration
 import edu.sns.clubboard.adapter.FBClub
 import edu.sns.clubboard.data.Club
 import edu.sns.clubboard.data.Request
 import edu.sns.clubboard.databinding.ActivityRequestManageBinding
+import edu.sns.clubboard.ui.LoadingDialog
 import edu.sns.clubboard.ui.RequestAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +28,10 @@ class RequestManageActivity : AppCompatActivity()
 
     private val requestAdapter = RequestAdapter()
 
+    private val loadingDialog = LoadingDialog()
+
     private lateinit var myClub: Club
+
 
     override fun onCreate(savedInstanceState: Bundle?)
     {
@@ -32,6 +39,11 @@ class RequestManageActivity : AppCompatActivity()
         setContentView(binding.root)
 
         val clubId = intent.getStringExtra("club_id")
+
+        binding.requestList.apply {
+            adapter = requestAdapter
+            addItemDecoration(DividerItemDecoration(this@RequestManageActivity, LinearLayout.VERTICAL))
+        }
 
         clubInterface.getClubData(clubId!!, onComplete = { club, _ ->
             myClub = club
@@ -43,7 +55,6 @@ class RequestManageActivity : AppCompatActivity()
 
     private fun init(club: Club, list: List<Request>)
     {
-        binding.requestList.adapter = requestAdapter
         requestAdapter.setItemList(list)
 
         binding.btnAccept.setOnClickListener {
@@ -100,12 +111,12 @@ class RequestManageActivity : AppCompatActivity()
     {
         binding.btnAccept.isEnabled = false
         binding.btnDecline.isEnabled = false
-        binding.loadingBackground.visibility = View.VISIBLE
+        loadingDialog.show(supportFragmentManager, "LoadingDialog")
     }
 
     private fun loadingEnd()
     {
-        binding.loadingBackground.visibility = View.GONE
+        loadingDialog.dismiss()
         binding.btnAccept.isEnabled = true
         binding.btnDecline.isEnabled = true
     }

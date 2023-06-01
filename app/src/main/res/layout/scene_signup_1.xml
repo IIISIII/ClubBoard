@@ -5,6 +5,17 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <TextView
+        android:id="@+id/text_password_pattern"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="@string/text_at_least_six"
+        android:textColor="#66000000"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toTopOf="@+id/input_pw_check"
+        app:layout_constraintStart_toStartOf="@+id/input_pw" />
+
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/input_id"
         style="@style/TextInputLayoutStyle"
@@ -33,15 +44,16 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/input_pw_check"
+        app:layout_constraintBottom_toTopOf="@+id/text_password_pattern"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:passwordToggleEnabled="true">
 
         <com.google.android.material.textfield.TextInputEditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/text_pw"
+            android:inputType="textPassword"
             android:singleLine="true"
             android:textSize="20sp" />
     </com.google.android.material.textfield.TextInputLayout>
@@ -57,12 +69,14 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        app:passwordToggleEnabled="true">
 
         <com.google.android.material.textfield.TextInputEditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/text_check_pw"
+            android:inputType="textPassword"
             android:singleLine="true"
             android:textSize="20sp" />
     </com.google.android.material.textfield.TextInputLayout>
@@ -101,9 +115,10 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
+        android:layout_marginTop="32dp"
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="32dp"
-        android:background="@drawable/button_background"
+        android:background="@drawable/roundbutton_background"
         android:text="@string/text_next"
         android:textAllCaps="false"
         android:textColor="@color/white"
@@ -111,6 +126,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/input_mail" />
+        app:layout_constraintTop_toBottomOf="@+id/input_mail"
+        app:layout_constraintVertical_bias="0.0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -8,7 +8,10 @@ import android.widget.Toast
 import edu.sns.clubboard.adapter.FBAuthorization
 import edu.sns.clubboard.data.User
 import edu.sns.clubboard.databinding.ActivityLoginBinding
+import edu.sns.clubboard.listener.SpaceBlockingTextWatcher
 import edu.sns.clubboard.port.AuthInterface
+import edu.sns.clubboard.ui.ErrorDialog
+import edu.sns.clubboard.ui.LoadingDialog
 
 class LoginActivity : AppCompatActivity() {
 
@@ -18,12 +21,25 @@ class LoginActivity : AppCompatActivity() {
 
     private val auth: AuthInterface = FBAuthorization.getInstance()
 
+    private val loadingDialog = LoadingDialog()
+
+    private val errorDialog = ErrorDialog()
+
+
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
         setSupportActionBar(binding.loginToolbar)
+
+        binding.inputLoginid.editText?.apply {
+            addTextChangedListener(SpaceBlockingTextWatcher(this))
+        }
+
+        binding.inputPassword.editText?.apply {
+            addTextChangedListener(SpaceBlockingTextWatcher(this))
+        }
 
         binding.signupBtn.setOnClickListener {
             startActivity(Intent(this, SignupActivity::class.java))
@@ -49,12 +65,12 @@ class LoginActivity : AppCompatActivity() {
 
     private fun loadingStart()
     {
-        binding.loadingBackground.visibility = View.VISIBLE
+        loadingDialog.show(supportFragmentManager, "LoadingDialog")
     }
 
     private fun loadingEnd()
     {
-        binding.loadingBackground.visibility = View.GONE
+        loadingDialog.dismiss()
     }
 
     private fun onSuccess(user: User)
@@ -70,7 +86,8 @@ class LoginActivity : AppCompatActivity() {
     private fun onFailed()
     {
         loadingEnd()
-        Toast.makeText(this, "failed", Toast.LENGTH_SHORT).show()
+
+        errorDialog.show(this, resources.getString(R.string.error_login_failed)) {}
     }
 
     private fun moveToMainActivity()

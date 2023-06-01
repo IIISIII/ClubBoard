@@ -1,6 +1,6 @@
 package edu.sns.clubboard.data
 
-data class User(var id: String?, val studentId: String, val name: String, val phone: String, val email: String, var nickname: String = "user", var loginId: String, var imagePath: String? = null, val admin: Boolean = false)
+data class User(var id: String?, val studentId: String, val name: String, val phone: String, val email: String, var nickname: String = "user", var loginId: String, var imagePath: String? = null, val isAdmin: Boolean = false, val isTestUser: Boolean = false)
 {
     companion object
     {
@@ -24,6 +24,10 @@ data class User(var id: String?, val studentId: String, val name: String, val ph
         const val PERMISSION_LEVEL_MEMBER = 2L
         const val PERMISSION_LEVEL_MANAGER = 1L
         const val PERMISSION_LEVEL_MASTER = 0L
+
+        const val SUCCESS_DELETE_ACCOUNT = 0
+        const val ERROR_DELETE_ACCOUNT_MASTER = 1
+        const val ERROR_DELETE_ACCOUNT = 2
     }
 
     fun toHashMap(): HashMap<String, Any?>

@@ -1,10 +1,7 @@
 package edu.sns.clubboard.adapter
 
 import android.util.Log
-import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FieldPath
-import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.*
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import edu.sns.clubboard.data.Board
@@ -25,6 +22,32 @@ class FBBoard: BoardInterface
 
     private val relations = db.collection("relations")
 
+    private val fileManager = FBFileManager.getInstance()
+
+    private var previewRegistration: ListenerRegistration? = null
+
+
+    override fun registerBoardPreview(id: String, limit: Long, onListChanged: (List<Post>) -> Unit)
+    {
+        previewRegistration?.remove()
+        previewRegistration = boards.document(id).collection("posts").orderBy(Post.KEY_DATE, Query.Direction.DESCENDING).limit(limit).addSnapshotListener { value, error ->
+            if(error != null) {
+
+                return@addSnapshotListener
+            }
+
+            val postList = ArrayList<Post>()
+            value?.documents?.forEach {
+                postList.add(FBConvertor.documentToPost(it))
+            }
+            onListChanged(postList)
+        }
+    }
+
+    override fun unregisterBoardPreview()
+    {
+        previewRegistration?.remove()
+    }
 
     override fun getBoardData(id: String, onSuccess: (Board) -> Unit, onFailed: () -> Unit)
     {
@@ -47,9 +70,15 @@ class FBBoard: BoardInterface
     {
         try {
             val hashMap = post.toHashMap()
-            hashMap[Post.KEY_AUTHOR] = db.document(hashMap[Post.KEY_AUTHOR] as String)
+            hashMap[Post.KEY_AUTHOR] = users.document(hashMap[Post.KEY_AUTHOR] as String)
 
-            boards.document(board.id).collection("posts").document().set(hashMap).addOnCompleteListener {
+            val posts = boards.document(board.id).collection("posts")
+            val task = if(post.id.isBlank())
+                    posts.document().set(hashMap)
+                else
+                    posts.document(post.id).update(hashMap)
+
+            task.addOnCompleteListener {
                 onComplete()
             }
             return true
@@ -57,23 +86,25 @@ class FBBoard: BoardInterface
         return false
     }
 
-    override fun readPost(boardId: String, postId: String, onComplete: (Post) -> Unit, onFailed: () -> Unit): Boolean
+    override fun readPost(boardId: String, postId: String, onComplete: (Post) -> Unit, onFailed: () -> Unit)
     {
         boards.document(boardId).collection("posts").document(postId).get().addOnCompleteListener {
             if(it.isSuccessful && it.result.exists())
-                onComplete(documentToPost(it.result))
+                onComplete(FBConvertor.documentToPost(it.result))
             else
                 onFailed()
         }
-
-        return false
     }
 
-    override fun deletePost(board: Board, post: Post, user: User, onComplete: () -> Unit): Boolean
+    override fun deletePost(board: Board, post: Post, user: User, onComplete: () -> Unit)
     {
-        //club의 managePermission 또는 masterPermission을 가지고 있을때만 작동, 또는 admin 속성이 true일 때 작동
+        post.imgPath?.run {
+            fileManager.removeImage(this)
+        }
 
-        return false
+        boards.document(board.id).collection("posts").document(post.id).delete().addOnCompleteListener {
+            onComplete()
+        }
     }
 
     override fun getBoardListByIdList(list: List<String>, onSuccess: (List<Board>) -> Unit, onFailed: () -> Unit)
@@ -151,7 +182,7 @@ class FBBoard: BoardInterface
                 val list = ArrayList<Post>()
 
                 for(doc in it.result.documents) {
-                    list.add(documentToPost(doc))
+                    list.add(FBConvertor.documentToPost(doc))
                     lastDoc = doc
                 }
 
@@ -189,22 +220,5 @@ class FBBoard: BoardInterface
             else
                 onComplete(false)
         }
-    }
-
-    private fun documentToPost(document: DocumentSnapshot): Post
-    {
-        val id = document.id
-        val title = document.getString(Post.KEY_TITLE).toString()
-        val text = document.getString(Post.KEY_TEXT).toString()
-        val date = document.getDate(Post.KEY_DATE)!!
-        val author = document.getDocumentReference(Post.KEY_AUTHOR)?.path!!
-        val postType = document.getLong(Post.KEY_TYPE) ?: Post.TYPE_NORMAL
-        val targetClubId = document.getDocumentReference(Post.KEY_TARGET_CLUB)?.id
-
-        val post = Post(id, title, text, date, author, postType)
-        if(postType == Post.TYPE_RECRUIT)
-            post.targetClubId = targetClubId
-
-        return post
     }
 }

@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import edu.sns.clubboard.adapter.FBAuthorization
 import edu.sns.clubboard.databinding.ActivityAuthenticateBinding
 import edu.sns.clubboard.port.AuthInterface
+import edu.sns.clubboard.ui.ErrorDialog
 
 class AuthenticateActivity : AppCompatActivity() {
 
@@ -15,6 +16,9 @@ class AuthenticateActivity : AppCompatActivity() {
     }
 
     private val auth: AuthInterface = FBAuthorization.getInstance()
+
+    private val errorDialog = ErrorDialog()
+
 
     override fun onCreate(savedInstanceState: Bundle?)
     {
@@ -30,7 +34,12 @@ class AuthenticateActivity : AppCompatActivity() {
         }
 
         binding.authBtn.setOnClickListener {
-            auth.authenticate(auth.getUserInfo())
+            auth.authenticate(auth.getUserInfo()) {
+                if(it)
+                    binding.checkAuthBtn.isEnabled = true
+                else
+                    errorDialog.show(this, resources.getString(R.string.error_failed_send_email), onConfirm = {})
+            }
         }
 
         binding.checkAuthBtn.setOnClickListener {

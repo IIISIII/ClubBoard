@@ -22,6 +22,7 @@ class InfiniteScrollListener: RecyclerView.OnScrollListener()
             if ((recyclerView.layoutManager as LinearLayoutManager?)!!.findLastCompletelyVisibleItemPosition() == getItemSize!!.invoke() - 1){
                 isLoading = true
                 onLoadingStart?.invoke()
+                loadingEnd()
             }
         }
     }

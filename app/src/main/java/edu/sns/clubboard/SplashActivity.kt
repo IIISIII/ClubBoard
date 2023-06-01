@@ -33,7 +33,7 @@ class SplashActivity : AppCompatActivity() {
 
     private fun init()
     {
-        if(auth.isLogined()) {
+        if(auth.isLogin()) {
             auth.getUserInfo(null) {
                 if(it == null)
                     splash { moveToLoginActivity() }

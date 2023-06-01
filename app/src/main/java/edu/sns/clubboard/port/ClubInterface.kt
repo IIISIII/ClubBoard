@@ -1,21 +1,18 @@
 package edu.sns.clubboard.port
 
 import android.graphics.Bitmap
-import edu.sns.clubboard.data.Board
-import edu.sns.clubboard.data.Club
-import edu.sns.clubboard.data.Request
-import edu.sns.clubboard.data.User
+import edu.sns.clubboard.data.*
 import java.util.Date
 
 interface ClubInterface
 {
-    fun createClub(clubName: String, description: String, img: Bitmap?, user: User, onComplete: (Club) -> Unit, onFailed: () -> Unit)
+    fun createClub(clubName: String, description: String, imgPath: String?, user: User, onComplete: (Club) -> Unit, onFailed: () -> Unit)
 
     fun activateClub(club: Club, onSuccess: () -> Unit, onFailed: () -> Unit)
 
     fun getClubData(id: String, onComplete: (Club, List<Board>) -> Unit, onFailed: () -> Unit)
 
-    fun getClubMembers(club: Club, onComplete: (List<User>) -> Unit, onFailed: () -> Unit)
+    fun getClubMembers(club: Club, onComplete: (List<Member>) -> Unit, onFailed: () -> Unit)
 
     fun getClubListLimited(reset: Boolean, limit: Long, onComplete: (List<Club>, Boolean) -> Unit): Boolean
 
@@ -34,6 +31,12 @@ interface ClubInterface
     fun checkClubMember(userId: String, clubId: String, onComplete: (Boolean, Long?) -> Unit)
 
     fun checkIsActivated(clubId: String, onComplete: (Boolean) -> Unit)
+
+    fun setUserPemissionLevel(clubId: String, user: User, master: User, permissionLevel: Long, onComplete: (Boolean) -> Unit)
+
+    fun kick(clubId: String, user: User, onComplete: (Boolean) -> Unit)
+
+    fun modifyClubInfo(club: Club, description: String, imgPath: String?, onComplete: (Boolean) -> Unit)
 
     suspend fun isMember(user: User, club: Club): Boolean
 

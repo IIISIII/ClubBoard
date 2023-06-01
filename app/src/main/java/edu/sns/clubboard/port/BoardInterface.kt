@@ -7,13 +7,17 @@ import edu.sns.clubboard.data.User
 
 interface BoardInterface
 {
+    fun registerBoardPreview(id: String, limit: Long, onListChanged: (List<Post>) -> Unit)
+
+    fun unregisterBoardPreview()
+
     fun getBoardData(id: String, onSuccess: (Board) -> Unit, onFailed: () -> Unit)
 
     fun writePost(board: Board, post: Post, author: User, onComplete: () -> Unit): Boolean
 
-    fun readPost(boardId: String, postId: String, onComplete: (Post) -> Unit, onFailed: () -> Unit): Boolean
+    fun readPost(boardId: String, postId: String, onComplete: (Post) -> Unit, onFailed: () -> Unit)
 
-    fun deletePost(board: Board, post: Post, user: User, onComplete: () -> Unit): Boolean
+    fun deletePost(board: Board, post: Post, user: User, onComplete: () -> Unit)
 
     fun getBoardListByIdList(list: List<String>, onSuccess: (List<Board>) -> Unit, onFailed: () -> Unit)
 
