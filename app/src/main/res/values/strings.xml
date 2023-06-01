@@ -69,4 +69,9 @@
     <string name="text_no_post">Board is Empty</string>
     <string name="error_failed_send_email">Failed to send email</string>
     <string name="error_login_failed">Login failed, check your id and password</string>
+    <string name="text_move_to_webmail">Link to Webmail</string>
+    <string name="text_authenticate">Webmail Authenticate</string>
+    <string name="text_send_mail">Send verify mail</string>
+    <string name="text_verify">Verify</string>
+    <string name="error_not_verify">Your mail is not verified yet</string>
 </resources>

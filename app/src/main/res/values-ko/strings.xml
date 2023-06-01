@@ -70,4 +70,9 @@
     <string name="text_no_post">게시물이 없습니다</string>
     <string name="error_failed_send_email">이메일 전송에 실패하였습니다</string>
     <string name="error_login_failed">로그인에 실패하였습니다. 아이디와 비밀번호를 확인해주세요.</string>
+    <string name="text_move_to_webmail">웹메일로 이동</string>
+    <string name="text_authenticate">웹메일 인증</string>
+    <string name="text_send_mail">인증메일 전송</string>
+    <string name="text_verify">인증 확인</string>
+    <string name="error_not_verify">인증이 확인되지 않았습니다</string>
 </resources>

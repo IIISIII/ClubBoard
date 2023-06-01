@@ -247,16 +247,24 @@ class FBAuthorization: AuthInterface
 
     override suspend fun isValidId(id: String): Boolean
     {
-        val result = users.whereEqualTo(User.KEY_LOGINID, id).count().get(AggregateSource.SERVER).await()
+        try {
+            val result =
+                users.whereEqualTo(User.KEY_LOGINID, id).count().get(AggregateSource.SERVER).await()
 
-        return result.count == 0L
+            return result.count == 0L
+        } catch(_: Exception) {}
+        return true
     }
 
     override suspend fun isValidMail(mail: String): Boolean
     {
-        val result = users.whereEqualTo(User.KEY_EMAIL, mail).count().get(AggregateSource.SERVER).await()
+        try {
+            val result =
+                users.whereEqualTo(User.KEY_EMAIL, mail).count().get(AggregateSource.SERVER).await()
 
-        return result.count == 0L
+            return result.count == 0L
+        } catch (_: Exception) {}
+        return true
     }
 
     override suspend fun isValidNickname(nickname: String): Boolean
