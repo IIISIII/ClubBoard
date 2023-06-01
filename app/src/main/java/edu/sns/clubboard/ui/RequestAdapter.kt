@@ -10,11 +10,18 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import edu.sns.clubboard.R
+import edu.sns.clubboard.adapter.FBAuthorization
+import edu.sns.clubboard.adapter.FBFileManager
 import edu.sns.clubboard.data.Request
 
 class RequestAdapter: RecyclerView.Adapter<RequestAdapter.ViewHolder>()
 {
     private var requestList = ArrayList<RequestWrapper>()
+
+    private val fileManager = FBFileManager.getInstance()
+
+    private val auth = FBAuthorization.getInstance()
+
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder
     {
@@ -24,10 +31,18 @@ class RequestAdapter: RecyclerView.Adapter<RequestAdapter.ViewHolder>()
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int)
     {
-        holder.bind(requestList[position])
+        holder.bind(requestList[position], position)
     }
 
     override fun getItemCount(): Int = requestList.size
+
+    fun delete(position: Int)
+    {
+        if(position >= 0 && position < requestList.size) {
+            requestList.removeAt(position)
+            notifyItemRemoved(position)
+        }
+    }
 
     @SuppressLint("NotifyDataSetChanged")
     fun setItemList(list: List<Request>?)
@@ -60,11 +75,28 @@ class RequestAdapter: RecyclerView.Adapter<RequestAdapter.ViewHolder>()
         val userName = view.findViewById<TextView>(R.id.user_name)
         val userCheck = view.findViewById<CheckBox>(R.id.user_check)
 
-        fun bind(requestWrapper: RequestWrapper)
+        fun bind(requestWrapper: RequestWrapper, position: Int)
         {
-            userName.text = requestWrapper.request.userName
-            userCheck.setOnCheckedChangeListener { _, isChecked ->
-                requestWrapper.isChecked = isChecked
+            auth.getUserInfo(requestWrapper.request.userId) {
+                if(it != null) {
+                    if(it.imagePath != null) {
+                        fileManager.getImage(it.imagePath!!) { img ->
+                            if(img != null)
+                                userImg.setImageBitmap(img)
+                            else
+                                userImg.setImageResource(R.drawable.ic_baseline_account_circle_24)
+                        }
+                    }
+                    else
+                        userImg.setImageResource(R.drawable.ic_baseline_account_circle_24)
+
+                    userName.text = it.name
+                    userCheck.setOnCheckedChangeListener { _, isChecked ->
+                        requestWrapper.isChecked = isChecked
+                    }
+                }
+                else
+                    delete(position)
             }
         }
     }

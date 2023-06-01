@@ -83,8 +83,12 @@ class PostAdapter(val board: Board): RecyclerView.Adapter<PostAdapter.ViewHolder
             if(item.postType == Post.TYPE_RECRUIT)
                 postImg.setImageResource(R.mipmap.empty_club_logo)
 
+            postImg.visibility = if(item.imgPath != null)
+                    View.VISIBLE
+                else
+                    View.GONE
+
             if(item.imgPath != null) {
-                postImg.visibility = View.VISIBLE
                 fileManager.getImage(item.imgPath) {
                     if(it != null)
                         postImg.setImageBitmap(it)

@@ -56,6 +56,8 @@ class ClubListAdapter(private val context: Context): RecyclerView.Adapter<ClubLi
                         clubImg.setImageResource(R.mipmap.empty_club_logo)
                 }
             }
+            else
+                clubImg.setImageResource(R.mipmap.empty_club_logo)
 
             this.itemView.setOnClickListener {
                 onClick?.invoke(item)

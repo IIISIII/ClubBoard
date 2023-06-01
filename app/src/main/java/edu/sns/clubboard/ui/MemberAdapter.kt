@@ -112,8 +112,10 @@ class MemberAdapter: RecyclerView.Adapter<MemberAdapter.ViewHolder>()
                 fileManager.getImage(this) {
                     if(it != null)
                         memberImg.setImageBitmap(it)
+                    else
+                        memberImg.setImageResource(R.drawable.ic_baseline_account_circle_24)
                 }
-            }
+            } ?: memberImg.setImageResource(R.drawable.ic_baseline_account_circle_24)
 
             memberName.text = member.user.name
 
