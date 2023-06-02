@@ -31,7 +31,7 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/text_nickname"
                 android:singleLine="true"
-                android:textSize="20sp" />
+                android:textSize="16sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -52,7 +52,7 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/text_name"
                 android:singleLine="true"
-                android:textSize="20sp" />
+                android:textSize="16sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -74,7 +74,7 @@
                 android:hint="@string/text_student_id"
                 android:inputType="number"
                 android:singleLine="true"
-                android:textSize="20sp" />
+                android:textSize="16sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -96,7 +96,7 @@
                 android:hint="@string/text_phone"
                 android:inputType="phone"
                 android:singleLine="true"
-                android:textSize="20sp" />
+                android:textSize="16sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <android.widget.Button

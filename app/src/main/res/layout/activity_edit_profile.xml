@@ -53,7 +53,7 @@
                 android:gravity="right"
                 android:text="@string/text_nickname"
                 android:textColor="@color/black"
-                android:textSize="24sp" />
+                android:textSize="20sp" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/input_nickname"
@@ -80,6 +80,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginTop="24dp"
             android:layout_marginEnd="8dp"
+            android:gravity="center"
             android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -92,7 +93,7 @@
                 android:gravity="right"
                 android:text="@string/text_student_id"
                 android:textColor="@color/black"
-                android:textSize="24sp" />
+                android:textSize="20sp" />
 
             <TextView
                 android:id="@+id/member_id"
@@ -102,7 +103,7 @@
                 android:layout_weight="1.7"
                 android:gravity="left"
                 android:textColor="@color/black"
-                android:textSize="24sp" />
+                android:textSize="20sp" />
 
         </LinearLayout>
 
@@ -113,6 +114,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginTop="24dp"
             android:layout_marginEnd="8dp"
+            android:gravity="center"
             android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -125,7 +127,7 @@
                 android:gravity="right"
                 android:text="@string/text_name"
                 android:textColor="@color/black"
-                android:textSize="24sp" />
+                android:textSize="20sp" />
 
             <TextView
                 android:id="@+id/member_name"
@@ -135,7 +137,7 @@
                 android:layout_weight="1.7"
                 android:gravity="left"
                 android:textColor="@color/black"
-                android:textSize="24sp" />
+                android:textSize="20sp" />
 
         </LinearLayout>
 
@@ -159,7 +161,7 @@
                 android:gravity="right"
                 android:text="@string/text_phone"
                 android:textColor="@color/black"
-                android:textSize="24sp" />
+                android:textSize="20sp" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/input_phone"
