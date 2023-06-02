@@ -57,7 +57,7 @@
     <string name="text_post_modify">Edit Post</string>
     <string name="text_post_delete">Delete Post</string>
     <string name="text_delete_account">Delete Account</string>
-    <string name="text_logout">Logout</string>
+    <string name="text_logout">Sign out</string>
     <string name="text_edit_profile">Edit Profile</string>
     <string name="error_password_length">Password must be 6 characters or more</string>
     <string name="error_password_check">Please check your Password</string>
