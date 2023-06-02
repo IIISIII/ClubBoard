@@ -30,7 +30,6 @@ class AuthenticateActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setSupportActionBar(binding.authToolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         binding.mailBtn.setOnClickListener {
             val viewIntent = Intent("android.intent.action.VIEW", Uri.parse("https://mail.hansung.ac.kr/"))
