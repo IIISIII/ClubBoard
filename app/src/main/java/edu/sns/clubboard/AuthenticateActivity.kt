@@ -68,6 +68,14 @@ class AuthenticateActivity : AppCompatActivity() {
                 loadingEnd()
             }
         }
+
+        binding.btnSignout.setOnClickListener {
+            loadingStart()
+
+            auth.logout {
+                moveToLoginActivity()
+            }
+        }
     }
 
     private fun onSuccess()
