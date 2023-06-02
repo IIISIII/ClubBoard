@@ -44,6 +44,8 @@ class ClubListActivity : AppCompatActivity()
 
     private val loadingDialog = LoadingDialog()
 
+    private val errorDialog = ErrorDialog()
+
     private var cantReadMore = false
 
     private var alreadyInit = false
@@ -219,9 +221,8 @@ class ClubListActivity : AppCompatActivity()
                     else {
                         if(permissionLevel == User.PERMISSION_LEVEL_MASTER)
                             manageDialog.show(supportFragmentManager, "ManageDialog")
-                        else {
-                            // error dialog club is not activated
-                        }
+                        else
+                            errorDialog.show(this, resources.getString(R.string.error_not_activated)) {}
                     }
                     loadingEnd()
                 }
@@ -238,7 +239,7 @@ class ClubListActivity : AppCompatActivity()
                                     clubInterface.sendRequest(user, description, Date(), club, onComplete = {
                                         loadingEnd()
                                     }, onFailed = {
-                                        //show error dialog
+                                        errorDialog.show(this@ClubListActivity, resources.getString(R.string.error_send_request)) {}
                                         loadingEnd()
                                     })
                                 }
@@ -251,7 +252,7 @@ class ClubListActivity : AppCompatActivity()
                             dialog.show(supportFragmentManager, "RequestDialog")
                         }
                         else {
-                            // error dialog already request
+                            errorDialog.show(this, resources.getString(R.string.error_processing_request)) {}
                         }
                         loadingEnd()
                     }

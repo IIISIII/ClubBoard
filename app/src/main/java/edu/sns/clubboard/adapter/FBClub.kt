@@ -220,7 +220,7 @@ class FBClub: ClubInterface
         var clubList = ArrayList<Club>()
 
         relations.whereEqualTo(User.KEY_RELATION_USER, userRef).get().addOnCompleteListener {
-            if(it.isSuccessful) {
+            if(it.isSuccessful && it.result.documents.isNotEmpty()) {
                 val clubRefs = it.result.documents.map { doc ->
                     doc.getDocumentReference(User.KEY_RELATION_CLUB)?.id
                 }

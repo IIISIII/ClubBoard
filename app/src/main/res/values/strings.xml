@@ -74,4 +74,8 @@
     <string name="text_send_mail">Send verify mail</string>
     <string name="text_verify">Verify</string>
     <string name="error_not_verify">Your mail is not verified yet</string>
+    <string name="text_no_join_club">You are not joined any club</string>
+    <string name="error_processing_request">Request is already processing</string>
+    <string name="error_not_activated">This club is not activated yet</string>
+    <string name="error_send_request">Request is failed</string>
 </resources>

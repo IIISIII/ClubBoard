@@ -39,6 +39,13 @@ class ClubListAdapter(private val context: Context): RecyclerView.Adapter<ClubLi
         this.onClick = onClick
     }
 
+    @SuppressLint("NotifyDataSetChanged")
+    fun clear()
+    {
+        this.list.clear()
+        notifyDataSetChanged()
+    }
+
     inner class ViewHolder(view: View): RecyclerView.ViewHolder(view)
     {
         private val clubTitle = view.findViewById<TextView>(R.id.input_title)

@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.MenuItem
+import android.view.View
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
@@ -73,11 +74,20 @@ class MyClubActivity : AppCompatActivity()
         val user = auth.getUserInfo()!!
 
         clubInterface.getUserClubList(user) {
-            val list = it.sortedBy { club ->
-                club.name
+            binding.textNoJoin.visibility = if(it.isNotEmpty())
+                    View.GONE
+                else
+                    View.VISIBLE
+
+            if(it.isNotEmpty()) {
+                val list = it.sortedBy { club ->
+                    club.name
+                }
+                binding.clubList.scrollToPosition(0)
+                listAdapter.setClubList(ArrayList(list))
             }
-            binding.clubList.scrollToPosition(0)
-            listAdapter.setClubList(ArrayList(list))
+            else
+                listAdapter.clear()
         }
     }
 
